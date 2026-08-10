@@ -119,7 +119,13 @@ program
       process.exitCode = 1
     } finally {
       if (db) {
-        await db.destroy()
+        try {
+          await db.destroy()
+        } catch (destroyError) {
+          console.error(
+            `Failed to destroy database pool: ${destroyError instanceof Error ? destroyError.message : String(destroyError)}`,
+          )
+        }
       }
     }
   })
