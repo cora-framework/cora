@@ -30,10 +30,10 @@ const configResult = resolveConfig({
 })
 
 if (!configResult.ok) {
-  throw new Error(configResult.err)
+  throw new Error(configResult.error)
 }
 
-const config = configResult.val
+const config = configResult.value
 ```
 
 Expected environment variables:
@@ -113,10 +113,10 @@ const migrations = defineMigrations("schema", [
 // Apply migrations before querying
 const result = await runMigrations(db, migrations)
 if (!result.ok) {
-  throw new Error(result.err)
+  throw new Error(result.error)
 }
 
-console.log(`Applied: ${result.val.applied.join(", ")}`)
+console.log(`Applied: ${result.value.applied.join(", ")}`)
 ```
 
 Migration execution is idempotent - already-applied migrations (verified by checksum) are skipped. Forward-only means there is no `down()` method; rollback is handled at the application level (point-in-time restore, schema rollback branches, etc.).
