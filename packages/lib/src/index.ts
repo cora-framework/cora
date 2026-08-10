@@ -1,3 +1,4 @@
+export { TypedEmitter } from "./events/emitter"
 export {
   add,
   cross,
