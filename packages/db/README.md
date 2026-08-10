@@ -49,7 +49,6 @@ Define your schema and create a typed database handle:
 
 ```ts
 import { createDatabase, type CoraDb } from "@cora/db"
-import type { Insertable, Selectable } from "kysely"
 
 interface User {
   id: number
@@ -81,7 +80,7 @@ Define migrations using `defineMigrations` and run them with `runMigrations`. Mi
 
 ```ts
 import { defineMigrations, runMigrations } from "@cora/db"
-import type { Kysely } from "kysely"
+import { sql, type Kysely } from "kysely"
 
 const migrations = defineMigrations("schema", [
   {
@@ -93,7 +92,7 @@ const migrations = defineMigrations("schema", [
         .addColumn("id", "integer", (col) => col.primaryKey().autoIncrement())
         .addColumn("email", "varchar(255)", (col) => col.notNull().unique())
         .addColumn("created_at", "timestamp", (col) =>
-          col.defaultTo(db.fn.now()).notNull()
+          col.defaultTo(sql`CURRENT_TIMESTAMP`).notNull()
         )
         .execute()
     },
@@ -152,3 +151,5 @@ pnpm add -D better-sqlite3
 ## SQL Dialect Notes
 
 @cora/db supports MySQL (via mysql2) and SQLite (via better-sqlite3). All internal Kysely calls use dialect-portable builder patterns. Migration authors must be aware of dialect-specific SQL syntax when writing custom `up()` functions - for example, SQLite has different `ALTER TABLE` behavior than MySQL.
+
+MySQL and MariaDB perform an implicit commit on DDL statements, so the per-migration transaction rollback only fully protects DML - a migration that fails after already running DDL may leave the schema partially applied and must be repaired manually.

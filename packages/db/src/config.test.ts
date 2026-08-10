@@ -78,4 +78,28 @@ describe("resolveConfig", () => {
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.error).toContain("port")
   })
+
+  it("rejects a non-integer explicit port", () => {
+    const r = resolveConfig({
+      host: "h",
+      user: "u",
+      password: "p",
+      database: "d",
+      port: 3.5,
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain("port")
+  })
+
+  it("rejects a negative explicit connectionLimit", () => {
+    const r = resolveConfig({
+      host: "h",
+      user: "u",
+      password: "p",
+      database: "d",
+      connectionLimit: -1,
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain("connectionLimit")
+  })
 })

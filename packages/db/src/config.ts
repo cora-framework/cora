@@ -21,6 +21,9 @@ export function resolveConfig(
 
   let port: number | undefined
   if (input.port !== undefined) {
+    if (!Number.isInteger(input.port) || input.port <= 0) {
+      return err("Invalid port: port must be a positive integer")
+    }
     port = input.port
   } else if (env.CORA_DB_PORT) {
     const portNum = Number(env.CORA_DB_PORT)
@@ -30,7 +33,18 @@ export function resolveConfig(
     port = portNum
   }
 
-  const connectionLimit = input.connectionLimit ?? 10
+  let connectionLimit = 10
+  if (input.connectionLimit !== undefined) {
+    if (
+      !Number.isInteger(input.connectionLimit) ||
+      input.connectionLimit <= 0
+    ) {
+      return err(
+        "Invalid connectionLimit: connectionLimit must be a positive integer",
+      )
+    }
+    connectionLimit = input.connectionLimit
+  }
 
   const missingFields: string[] = []
   if (!host) missingFields.push("host")
