@@ -1,3 +1,5 @@
+export type { MenuItem } from "./menu/Menu"
+export { Menu } from "./menu/Menu"
 export type {
   CoraNotification,
   NotificationKind,
