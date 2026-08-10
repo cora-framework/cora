@@ -169,6 +169,48 @@ describe("TypedEmitter", () => {
     expect(emitter.listenerCount("count")).toBe(1)
   })
 
+  it("removes a once()-registered handler via off() using the original handler reference", () => {
+    const emitter = new TypedEmitter<TestEvents>()
+    let calls = 0
+    const handler = () => {
+      calls++
+    }
+
+    emitter.once("count", handler)
+    emitter.off("count", handler)
+    emitter.emit("count", 1)
+
+    expect(calls).toBe(0)
+    expect(emitter.listenerCount("count")).toBe(0)
+  })
+
+  it("prunes empty internal listener storage after off, unsubscribe, and once auto-fire", () => {
+    const emitter = new TypedEmitter<TestEvents>()
+
+    // Removal via off()
+    const offHandler = () => {}
+    emitter.on("greet", offHandler)
+    emitter.off("greet", offHandler)
+    expect(emitter.listenerCount("greet")).toBe(0)
+
+    // Removal via the unsubscribe() function returned from on()
+    const unsubscribe = emitter.on("count", () => {})
+    unsubscribe()
+    expect(emitter.listenerCount("count")).toBe(0)
+
+    // Removal via once() auto-firing
+    emitter.once("empty", () => {})
+    emitter.emit("empty")
+    expect(emitter.listenerCount("empty")).toBe(0)
+
+    // Pruned event keys leave the emitter in a clean state: removeAllListeners()
+    // over already-empty events is a no-op that does not throw.
+    expect(() => emitter.removeAllListeners()).not.toThrow()
+    expect(emitter.listenerCount("greet")).toBe(0)
+    expect(emitter.listenerCount("count")).toBe(0)
+    expect(emitter.listenerCount("empty")).toBe(0)
+  })
+
   it("removeAllListeners() with no argument clears every event's handlers", () => {
     const emitter = new TypedEmitter<TestEvents>()
     emitter.on("greet", () => {})

@@ -17,6 +17,15 @@ export class TypedEmitter<Events extends Record<string, unknown[]>> {
     Set<Handler<Events[keyof Events]>>
   >()
 
+  // Maps the caller's original once() handler to the internal wrapper that
+  // is actually stored in `listeners`, per event. This lets off() find and
+  // remove a once()-registered handler by the reference the caller knows
+  // about, even though the wrapper (not the original) is what runs.
+  private readonly onceWrappers = new Map<
+    keyof Events,
+    Map<Handler<Events[keyof Events]>, Handler<Events[keyof Events]>>
+  >()
+
   on<K extends keyof Events>(
     event: K,
     handler: Handler<Events[K]>,
@@ -35,15 +44,39 @@ export class TypedEmitter<Events extends Record<string, unknown[]>> {
     handler: Handler<Events[K]>,
   ): () => void {
     const wrapped: Handler<Events[K]> = (...args) => {
-      unsubscribe()
+      this.off(event, handler)
       handler(...args)
     }
-    const unsubscribe = this.on(event, wrapped)
-    return unsubscribe
+    let onceMap = this.onceWrappers.get(event)
+    if (!onceMap) {
+      onceMap = new Map()
+      this.onceWrappers.set(event, onceMap)
+    }
+    onceMap.set(
+      handler as Handler<Events[keyof Events]>,
+      wrapped as Handler<Events[keyof Events]>,
+    )
+    this.on(event, wrapped)
+    return () => this.off(event, handler)
   }
 
   off<K extends keyof Events>(event: K, handler: Handler<Events[K]>): void {
-    this.listeners.get(event)?.delete(handler as Handler<Events[keyof Events]>)
+    const set = this.listeners.get(event)
+    set?.delete(handler as Handler<Events[keyof Events]>)
+
+    const onceMap = this.onceWrappers.get(event)
+    const wrapped = onceMap?.get(handler as Handler<Events[keyof Events]>)
+    if (onceMap && wrapped !== undefined) {
+      set?.delete(wrapped)
+      onceMap.delete(handler as Handler<Events[keyof Events]>)
+      if (onceMap.size === 0) {
+        this.onceWrappers.delete(event)
+      }
+    }
+
+    if (set && set.size === 0) {
+      this.listeners.delete(event)
+    }
   }
 
   emit<K extends keyof Events>(event: K, ...args: Events[K]): void {
@@ -76,8 +109,10 @@ export class TypedEmitter<Events extends Record<string, unknown[]>> {
   removeAllListeners(event?: keyof Events): void {
     if (event === undefined) {
       this.listeners.clear()
+      this.onceWrappers.clear()
       return
     }
     this.listeners.delete(event)
+    this.onceWrappers.delete(event)
   }
 }
