@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { MenuItem } from "./Menu"
 import { Menu } from "./Menu"
@@ -93,5 +94,27 @@ describe("Menu", () => {
     expect(charlie?.getAttribute("data-selected")).toBe("true")
     const alpha = screen.getByText("Alpha").closest('[role="menuitem"]')
     expect(alpha?.getAttribute("data-selected")).toBeNull()
+  })
+
+  it("keeps click and keyboard selection in sync (no stale id on Enter after click)", async () => {
+    const user = userEvent.setup()
+    const onActivate = vi.fn()
+    const onSelect = vi.fn()
+    render(<Menu items={items} onActivate={onActivate} onSelect={onSelect} />)
+
+    await user.click(screen.getByText("Charlie"))
+    expect(onSelect).toHaveBeenCalledWith("c")
+
+    await user.keyboard("{Enter}")
+
+    expect(onActivate.mock.calls).toEqual([["c"], ["c"]])
+  })
+
+  it("does not activate a disabled item on Enter with a controlled selectedId", () => {
+    const onActivate = vi.fn()
+    render(<Menu items={items} selectedId="b" onActivate={onActivate} />)
+    const menu = screen.getByRole("menu")
+    fireEvent.keyDown(menu, { key: "Enter" })
+    expect(onActivate).not.toHaveBeenCalled()
   })
 })

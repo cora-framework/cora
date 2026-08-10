@@ -69,8 +69,9 @@ export function Menu({
       moveSelection(-1)
     } else if (event.key === "Enter") {
       event.preventDefault()
-      if (currentSelectedId !== undefined) {
-        onActivate(currentSelectedId)
+      const selectedItem = items.find((item) => item.id === currentSelectedId)
+      if (selectedItem !== undefined && !selectedItem.disabled) {
+        onActivate(selectedItem.id)
       }
     }
   }
@@ -79,6 +80,10 @@ export function Menu({
     if (item.disabled) {
       return
     }
+    if (!isControlled) {
+      setInternalSelectedId(item.id)
+    }
+    onSelect?.(item.id)
     onActivate(item.id)
   }
 
@@ -96,6 +101,7 @@ export function Menu({
       {items.map((item) => {
         const isSelected = item.id === currentSelectedId
         return (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard interaction is handled by the container's roving menu pattern
           <div
             key={item.id}
             role="menuitem"
@@ -108,11 +114,6 @@ export function Menu({
             }
             tabIndex={-1}
             onClick={() => handleItemClick(item)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                handleItemClick(item)
-              }
-            }}
           >
             <span className="cora-menu-item-label">{item.label}</span>
             {item.hint !== undefined ? (
