@@ -1,5 +1,10 @@
 export { TypedEmitter } from "./events/emitter"
 export {
+  createLocale,
+  type Locale,
+  type LocaleDict,
+} from "./locale/locale"
+export {
   add,
   cross,
   distance,
