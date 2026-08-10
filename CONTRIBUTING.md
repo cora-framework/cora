@@ -6,7 +6,8 @@ Thanks for helping build the framework for CyberMP.
 
 1. Node ≥ 22, pnpm ≥ 9 (`corepack enable pnpm`)
 2. `pnpm install`
-3. `pnpm test` - everything should pass before you start
+3. `pnpm build` once, so workspace type declarations exist (packages typecheck against each other's build output)
+4. `pnpm test` - everything should pass before you start
 
 ## Workflow
 
