@@ -1,0 +1,218 @@
+:root {
+  --cora-bg: #0b0e14;
+  --cora-surface: #12161f;
+  --cora-text: #e6e9ef;
+  --cora-muted: #8b93a7;
+  --cora-accent: #22d3ee;
+  --cora-accent-2: #e879f9;
+  --cora-danger: #f87171;
+  --cora-success: #4ade80;
+  --cora-warning: #fbbf24;
+  --cora-radius: 8px;
+  --cora-font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.cora-notifications {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--cora-font);
+}
+
+.cora-notification {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  border-radius: var(--cora-radius);
+  padding: 12px 14px;
+  border-left: 4px solid var(--cora-accent);
+}
+
+.cora-notification--info {
+  border-left-color: var(--cora-accent);
+}
+
+.cora-notification--success {
+  border-left-color: var(--cora-success);
+}
+
+.cora-notification--warning {
+  border-left-color: var(--cora-warning);
+}
+
+.cora-notification--error {
+  border-left-color: var(--cora-danger);
+}
+
+.cora-notification__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cora-notification__title {
+  font-weight: 600;
+}
+
+.cora-notification__message {
+  color: var(--cora-muted);
+  font-size: 0.875em;
+}
+
+.cora-notification__dismiss {
+  background: transparent;
+  border: none;
+  color: var(--cora-muted);
+  cursor: pointer;
+  font-size: 1em;
+  line-height: 1;
+  padding: 2px;
+}
+
+.cora-notification__dismiss:hover {
+  color: var(--cora-text);
+}
+
+.cora-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  border-radius: var(--cora-radius);
+  padding: 6px;
+  font-family: var(--cora-font);
+  outline: none;
+}
+
+.cora-menu-title {
+  color: var(--cora-muted);
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 10px 2px;
+}
+
+.cora-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: calc(var(--cora-radius) - 4px);
+  cursor: pointer;
+}
+
+.cora-menu-item[aria-disabled="true"] {
+  color: var(--cora-muted);
+  cursor: not-allowed;
+}
+
+.cora-menu-item-selected {
+  background: var(--cora-bg);
+  box-shadow: inset 0 0 0 1px var(--cora-accent);
+}
+
+.cora-menu-item-hint {
+  color: var(--cora-muted);
+  font-size: 0.8em;
+}
+
+.cora-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 14, 20, 0.7);
+  font-family: var(--cora-font);
+}
+
+.cora-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 480px;
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  border-radius: var(--cora-radius);
+  padding: 20px;
+  box-shadow: 0 0 0 1px var(--cora-accent);
+}
+
+.cora-dialog-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.cora-dialog-body {
+  color: var(--cora-muted);
+}
+
+.cora-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cora-dialog-cancel,
+.cora-dialog-confirm {
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: var(--cora-font);
+}
+
+.cora-dialog-cancel {
+  background: transparent;
+  color: var(--cora-muted);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+}
+
+.cora-dialog-cancel:hover {
+  color: var(--cora-text);
+}
+
+.cora-dialog-confirm {
+  background: var(--cora-accent);
+  color: var(--cora-bg);
+  font-weight: 600;
+}
+
+.cora-dialog-confirm:hover {
+  background: var(--cora-accent-2);
+}
+
+.cora-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--cora-font);
+}
+
+.cora-progress-label {
+  color: var(--cora-muted);
+  font-size: 0.875em;
+}
+
+.cora-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--cora-bg);
+  border-radius: var(--cora-radius);
+  overflow: hidden;
+}
+
+.cora-progress-fill {
+  height: 100%;
+  background: var(--cora-accent);
+  border-radius: var(--cora-radius);
+  transition: width 0.2s ease;
+}
