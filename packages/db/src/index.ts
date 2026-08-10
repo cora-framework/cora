@@ -5,3 +5,8 @@ export {
   createTestDatabase,
   withTransaction,
 } from "./database"
+export {
+  type CoraMigration,
+  defineMigrations,
+  runMigrations,
+} from "./migrations"
