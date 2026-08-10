@@ -6,4 +6,5 @@ export type {
   NotificationKind,
 } from "./notifications/Notifications"
 export { Notifications } from "./notifications/Notifications"
+export { ProgressBar } from "./progress/ProgressBar"
 export { applyTheme, coraTheme } from "./theme"

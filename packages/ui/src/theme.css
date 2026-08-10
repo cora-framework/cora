@@ -189,3 +189,30 @@
 .cora-dialog-confirm:hover {
   background: var(--cora-accent-2);
 }
+
+.cora-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--cora-font);
+}
+
+.cora-progress-label {
+  color: var(--cora-muted);
+  font-size: 0.875em;
+}
+
+.cora-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--cora-bg);
+  border-radius: var(--cora-radius);
+  overflow: hidden;
+}
+
+.cora-progress-fill {
+  height: 100%;
+  background: var(--cora-accent);
+  border-radius: var(--cora-radius);
+  transition: width 0.2s ease;
+}
