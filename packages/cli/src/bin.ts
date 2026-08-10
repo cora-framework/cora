@@ -3,6 +3,7 @@ import { execSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { dirname, isAbsolute, join, resolve } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
+import type { CoraDb } from "@cora/db"
 import { createDatabase } from "@cora/db"
 import { Command } from "commander"
 import { runDoctor } from "./doctor.js"
@@ -94,8 +95,9 @@ program
       return
     }
 
+    let db: CoraDb | undefined
     try {
-      const db = createDatabase(validated.value.db)
+      db = createDatabase(validated.value.db)
       const result = await runMigrateWithDb(db, validated.value.migrations)
 
       if (!result.ok) {
@@ -115,6 +117,10 @@ program
       const message = error instanceof Error ? error.message : String(error)
       console.error(`Migration failed: ${message}`)
       process.exitCode = 1
+    } finally {
+      if (db) {
+        await db.destroy()
+      }
     }
   })
 
