@@ -63,6 +63,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@cora/db':
+        specifier: workspace:*
+        version: link:../db
       '@cora/lib':
         specifier: workspace:*
         version: link:../lib

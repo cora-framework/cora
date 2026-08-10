@@ -23,6 +23,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@cora/db": "workspace:*",
     "@cora/lib": "workspace:*",
     "commander": "^15.0.0"
   },
