@@ -1,0 +1,22 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "migrate": "cora migrate"
+  },
+  "dependencies": {
+    "@cora/lib": "^0.1.0",
+    "@cora/db": "^0.1.0",
+    "@cora/cli": "^0.1.0",
+    "kysely": "^0.28.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "@biomejs/biome": "^2.5.7"
+  }
+}

@@ -1,9 +1,9 @@
-export { TypedEmitter } from "./events/emitter"
+export { TypedEmitter } from "./events/emitter.js"
 export {
   createLocale,
   type Locale,
   type LocaleDict,
-} from "./locale/locale"
+} from "./locale/locale.js"
 export {
   add,
   cross,
@@ -19,8 +19,8 @@ export {
   sub,
   type Vec3,
   vec3,
-} from "./math/vec3"
-export { err, ok, type Result } from "./result"
+} from "./math/vec3.js"
+export { err, ok, type Result } from "./result.js"
 export {
   type BoxZone,
   boxZone,
@@ -32,4 +32,4 @@ export {
   type SphereZone,
   sphereZone,
   type Zone,
-} from "./zones/zones"
+} from "./zones/zones.js"

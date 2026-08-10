@@ -1,4 +1,4 @@
-import { distance, type Vec3 } from "../math/vec3"
+import { distance, type Vec3 } from "../math/vec3.js"
 
 /**
  * Zones use an x/y ground-plane with z as the vertical height axis, matching
