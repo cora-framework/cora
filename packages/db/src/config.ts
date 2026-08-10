@@ -2,11 +2,11 @@ import { err, ok, type Result } from "@cora/lib"
 
 export interface CoraDbConfig {
   host: string
-  port: number
+  port?: number
   user: string
   password: string
   database: string
-  connectionLimit: number
+  connectionLimit?: number
 }
 
 export function resolveConfig(
@@ -19,9 +19,17 @@ export function resolveConfig(
   const password = input.password ?? env.CORA_DB_PASSWORD
   const database = input.database ?? env.CORA_DB_DATABASE
 
-  const port =
-    input.port ??
-    (env.CORA_DB_PORT ? parseInt(env.CORA_DB_PORT, 10) : undefined)
+  let port: number | undefined
+  if (input.port !== undefined) {
+    port = input.port
+  } else if (env.CORA_DB_PORT) {
+    const portNum = Number(env.CORA_DB_PORT)
+    if (!Number.isInteger(portNum) || portNum <= 0) {
+      return err("Invalid port: port must be a positive integer")
+    }
+    port = portNum
+  }
+
   const connectionLimit = input.connectionLimit ?? 10
 
   const missingFields: string[] = []
@@ -29,10 +37,6 @@ export function resolveConfig(
   if (!user) missingFields.push("user")
   if (!password) missingFields.push("password")
   if (!database) missingFields.push("database")
-
-  if (env.CORA_DB_PORT && Number.isNaN(port)) {
-    return err("Invalid port: port must be numeric")
-  }
 
   if (missingFields.length > 0) {
     return err(`Missing required fields: ${missingFields.join(", ")}`)

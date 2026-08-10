@@ -66,4 +66,16 @@ describe("resolveConfig", () => {
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.error).toContain("port")
   })
+
+  it("rejects env port with non-numeric suffix", () => {
+    const r = resolveConfig({
+      host: "h",
+      user: "u",
+      password: "p",
+      database: "d",
+      env: { CORA_DB_PORT: "3307xyz" },
+    })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain("port")
+  })
 })
