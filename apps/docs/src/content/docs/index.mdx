@@ -1,0 +1,32 @@
+---
+title: CORA
+description: Cyber Online Runtime Architecture - the open-source framework for CyberMP.
+template: splash
+hero:
+  tagline: The open-source framework for CyberMP. Type-safe from UI to database. Modular by design.
+  actions:
+    - text: Read the philosophy
+      link: /getting-started/philosophy/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub
+      link: https://github.com/cora-framework/cora
+      icon: external
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components"
+
+<CardGrid stagger>
+  <Card title="End-to-end type-safety" icon="approve-check">
+    One typed contract from React UI through client to server and database. Rename a field - the build breaks, not your live server.
+  </Card>
+  <Card title="Modular by design" icon="puzzle">
+    Install exactly the modules you need via npm. Real semver, real dependency management, per-module error isolation.
+  </Card>
+  <Card title="Standalone utilities" icon="setting">
+    `@cora/db`, `@cora/lib` and `@cora/ui` work in any CyberMP project - no framework adoption required.
+  </Card>
+  <Card title="Built in the open" icon="github">
+    MIT-licensed, RFC-driven design, founding contributors wanted.
+  </Card>
+</CardGrid>
