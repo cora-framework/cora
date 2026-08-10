@@ -37,7 +37,21 @@ if (result.ok) {
 Pure 3D vector operations for geometry and physics calculations.
 
 ```ts
-import { vec3, add, sub, distance, normalize } from "@cora/lib"
+import {
+  vec3,
+  add,
+  sub,
+  scale,
+  distance,
+  distanceSq,
+  dot,
+  cross,
+  length,
+  lengthSq,
+  normalize,
+  lerp,
+  equalsApprox,
+} from "@cora/lib"
 
 const a = vec3(1, 2, 3)
 const b = vec3(4, 5, 6)
@@ -117,15 +131,20 @@ interface GameEvents {
 
 const gameEmitter = new TypedEmitter<GameEvents>()
 
-// Subscribe with full type safety
-const unsubscribe = gameEmitter.on("playerJoined", (playerId) => {
+// Define handlers as named functions for reuse
+const onPlayerJoined = (playerId: string) => {
   console.log(`${playerId} joined`)
-})
+}
+
+const onScoreChanged = (playerId: string, newScore: number) => {
+  console.log(`${playerId} scored: ${newScore}`)
+}
+
+// Subscribe with full type safety
+const unsubscribe = gameEmitter.on("playerJoined", onPlayerJoined)
 
 // Fire-once listeners
-gameEmitter.once("scoreChanged", (playerId, newScore) => {
-  console.log(`${playerId} scored: ${newScore}`)
-})
+gameEmitter.once("scoreChanged", onScoreChanged)
 
 // Emit with type checking
 gameEmitter.emit("playerJoined", "alice")
@@ -138,7 +157,7 @@ unsubscribe()
 const count = gameEmitter.listenerCount("playerJoined")
 
 // Remove handlers
-gameEmitter.off("playerJoined", handler)
+gameEmitter.off("playerJoined", onPlayerJoined)
 
 // Clear all listeners for an event, or all events
 gameEmitter.removeAllListeners("playerJoined")
