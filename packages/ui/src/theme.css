@@ -1,0 +1,77 @@
+:root {
+  --cora-bg: #0b0e14;
+  --cora-surface: #12161f;
+  --cora-text: #e6e9ef;
+  --cora-muted: #8b93a7;
+  --cora-accent: #22d3ee;
+  --cora-accent-2: #e879f9;
+  --cora-danger: #f87171;
+  --cora-success: #4ade80;
+  --cora-warning: #fbbf24;
+  --cora-radius: 8px;
+  --cora-font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.cora-notifications {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--cora-font);
+}
+
+.cora-notification {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  border-radius: var(--cora-radius);
+  padding: 12px 14px;
+  border-left: 4px solid var(--cora-accent);
+}
+
+.cora-notification--info {
+  border-left-color: var(--cora-accent);
+}
+
+.cora-notification--success {
+  border-left-color: var(--cora-success);
+}
+
+.cora-notification--warning {
+  border-left-color: var(--cora-warning);
+}
+
+.cora-notification--error {
+  border-left-color: var(--cora-danger);
+}
+
+.cora-notification__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cora-notification__title {
+  font-weight: 600;
+}
+
+.cora-notification__message {
+  color: var(--cora-muted);
+  font-size: 0.875em;
+}
+
+.cora-notification__dismiss {
+  background: transparent;
+  border: none;
+  color: var(--cora-muted);
+  cursor: pointer;
+  font-size: 1em;
+  line-height: 1;
+  padding: 2px;
+}
+
+.cora-notification__dismiss:hover {
+  color: var(--cora-text);
+}
