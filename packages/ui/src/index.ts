@@ -1,3 +1,4 @@
+export { Dialog } from "./dialog/Dialog"
 export type { MenuItem } from "./menu/Menu"
 export { Menu } from "./menu/Menu"
 export type {
