@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  background: var(--cora-bg, #0b0e14);
+  color: var(--cora-text, #e6e9ef);
+  font-family: var(
+    --cora-font,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif
+  );
+}
+
+.harness {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.harness-header h1 {
+  margin: 0 0 4px;
+}
+
+.harness-header p {
+  margin: 0;
+  color: var(--cora-muted, #8b93a7);
+}
+
+.harness-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--cora-surface, #12161f);
+  border-radius: var(--cora-radius, 8px);
+  padding: 20px;
+}
+
+.harness-section h2 {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+.harness-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.harness-controls button {
+  background: var(--cora-bg, #0b0e14);
+  color: var(--cora-text, #e6e9ef);
+  border: 1px solid var(--cora-muted, #8b93a7);
+  border-radius: calc(var(--cora-radius, 8px) - 4px);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.harness-controls button:hover {
+  border-color: var(--cora-accent, #22d3ee);
+  color: var(--cora-accent, #22d3ee);
+}
+
+.harness-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.harness-log h3 {
+  margin: 4px 0 8px;
+  font-size: 0.9em;
+  color: var(--cora-muted, #8b93a7);
+}
+
+.harness-log ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.harness-log-empty {
+  color: var(--cora-muted, #8b93a7);
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.harness-status {
+  margin: 0;
+  color: var(--cora-muted, #8b93a7);
+}
