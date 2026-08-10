@@ -1,0 +1,40 @@
+{
+  "name": "@cora/db",
+  "version": "0.0.0",
+  "description": "Typed persistence layer for the CORA framework - standalone-usable.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cora/lib": "workspace:*",
+    "kysely": "^0.28.0"
+  },
+  "peerDependencies": {
+    "mysql2": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "better-sqlite3": "^12.0.0",
+    "@types/better-sqlite3": "^7.6.0",
+    "mysql2": "^3.11.0"
+  }
+}
