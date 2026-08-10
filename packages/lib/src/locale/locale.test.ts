@@ -116,6 +116,23 @@ describe("Locale system", () => {
     expect(locale.t("greeting", {})).toBe("Hello, {name}!")
   })
 
+  it("should not interpolate prototype-inherited keys like {constructor}", () => {
+    const locales = {
+      test: {
+        pattern: "{constructor}",
+      },
+    }
+    const testLocale = createLocale({
+      locales,
+      fallback: "test",
+    })
+    expect(testLocale.t("pattern", { name: "Alice" })).toBe("{constructor}")
+  })
+
+  it("should return false from has() for prototype-inherited keys like toString", () => {
+    expect(locale.has("toString")).toBe(false)
+  })
+
   it("should handle complex interpolation patterns", () => {
     const locales = {
       test: {

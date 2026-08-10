@@ -43,6 +43,12 @@ export class TypedEmitter<Events extends Record<string, unknown[]>> {
     event: K,
     handler: Handler<Events[K]>,
   ): () => void {
+    // A prior once() registration for this exact handler, if any, is still
+    // fully wired up (listener set + onceMap). Tear it down first so its
+    // wrapper cannot survive as an orphan once we overwrite the onceMap
+    // entry below - otherwise it would keep firing on every future emit.
+    this.off(event, handler)
+
     const wrapped: Handler<Events[K]> = (...args) => {
       this.off(event, handler)
       handler(...args)

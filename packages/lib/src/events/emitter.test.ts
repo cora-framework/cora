@@ -211,6 +211,23 @@ describe("TypedEmitter", () => {
     expect(emitter.listenerCount("empty")).toBe(0)
   })
 
+  it("does not leak an orphaned wrapper when once() is registered twice with the same handler", () => {
+    const emitter = new TypedEmitter<TestEvents>()
+    let calls = 0
+    const handler = () => {
+      calls++
+    }
+
+    emitter.once("count", handler)
+    emitter.once("count", handler)
+    emitter.emit("count", 1)
+    const callsAfterFirstEmit = calls
+    emitter.emit("count", 2)
+
+    expect(calls).toBe(callsAfterFirstEmit)
+    expect(emitter.listenerCount("count")).toBe(0)
+  })
+
   it("removeAllListeners() with no argument clears every event's handlers", () => {
     const emitter = new TypedEmitter<TestEvents>()
     emitter.on("greet", () => {})

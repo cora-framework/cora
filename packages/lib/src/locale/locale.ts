@@ -28,13 +28,20 @@ export function createLocale(options: {
       const dict = locales[currentLocale] || locales[fallback] || {}
       const fallbackDict = locales[fallback] || {}
 
-      const text = dict[key] ?? fallbackDict[key] ?? key
+      const text: string = Object.hasOwn(dict, key)
+        ? (dict[key] ?? key)
+        : Object.hasOwn(fallbackDict, key)
+          ? (fallbackDict[key] ?? key)
+          : key
 
       if (!params || Object.keys(params).length === 0) {
         return text
       }
 
       return text.replace(/{(\w+)}/g, (match, placeholder) => {
+        if (!Object.hasOwn(params, placeholder)) {
+          return match
+        }
         const value = params[placeholder]
         if (value === undefined) {
           return match
@@ -61,7 +68,7 @@ export function createLocale(options: {
     has(key: string): boolean {
       const dict = locales[currentLocale] || {}
       const fallbackDict = locales[fallback] || {}
-      return key in dict || key in fallbackDict
+      return Object.hasOwn(dict, key) || Object.hasOwn(fallbackDict, key)
     },
   }
 }
