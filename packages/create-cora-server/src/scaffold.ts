@@ -1,4 +1,12 @@
-import { cp, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
+import {
+  cp,
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  stat,
+  writeFile,
+} from "node:fs/promises"
 import { dirname, join, relative, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 import { err, ok, type Result } from "@cora/lib"
@@ -14,6 +22,17 @@ const templateDir = join(currentDir, "..", "template")
 
 const PLACEHOLDER = "__PROJECT_NAME__"
 const PERSONALIZED_FILES = ["package.json", "README.md"]
+
+/**
+ * Files committed in the template under a dotless name and renamed back to
+ * their dotfile form after copying into the target directory. npm never
+ * ships dotfiles in a published tarball regardless of the package's
+ * `files` array, so `.gitignore` is committed as `gitignore` and restored
+ * here instead of being lost on publish.
+ */
+const RENAMED_ON_COPY: ReadonlyArray<readonly [string, string]> = [
+  ["gitignore", ".gitignore"],
+]
 
 export interface ScaffoldOptions {
   targetDir: string
@@ -76,6 +95,10 @@ export async function scaffold(
   }
 
   await cp(templateDir, targetDir, { recursive: true })
+
+  for (const [from, to] of RENAMED_ON_COPY) {
+    await rename(join(targetDir, from), join(targetDir, to))
+  }
 
   for (const relativeFile of PERSONALIZED_FILES) {
     const filePath = join(targetDir, relativeFile)

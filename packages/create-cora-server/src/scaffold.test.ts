@@ -29,6 +29,7 @@ describe("scaffold", () => {
     expect(result.value.files).toContain("tsconfig.json")
     expect(result.value.files).toContain("biome.json")
     expect(result.value.files).toContain(".gitignore")
+    expect(result.value.files).not.toContain("gitignore")
     expect(result.value.files).toContain("cora.migrate.mjs")
     expect(result.value.files).toContain("src/server/index.ts")
     expect(result.value.files).toContain("src/server/index.test.ts")
@@ -40,6 +41,9 @@ describe("scaffold", () => {
     const readme = await readFile(join(targetDir, "README.md"), "utf8")
     expect(readme).toContain("# my-server")
     expect(readme).not.toContain("__PROJECT_NAME__")
+
+    const gitignore = await readFile(join(targetDir, ".gitignore"), "utf8")
+    expect(gitignore).toContain("node_modules")
   })
 
   it("errs when the target directory exists and is not empty", async () => {
