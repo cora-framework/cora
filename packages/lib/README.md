@@ -123,7 +123,7 @@ A minimal event emitter where each instance owns its listeners (no global single
 ```ts
 import { TypedEmitter } from "@cora/lib"
 
-interface GameEvents {
+type GameEvents = {
   playerJoined: [playerId: string]
   playerLeft: [playerId: string]
   scoreChanged: [playerId: string, newScore: number]
@@ -163,6 +163,8 @@ gameEmitter.off("playerJoined", onPlayerJoined)
 gameEmitter.removeAllListeners("playerJoined")
 gameEmitter.removeAllListeners()
 ```
+
+Event maps must be declared as type aliases (not interfaces) to satisfy the `Record<string, unknown[]>` constraint required by TypedEmitter.
 
 Emit dispatches over a snapshot of listeners taken at call time, so handlers added or removed during dispatch never affect the current emit - only subsequent ones. If a handler throws, other handlers still run; errors are collected and rethrown as a single `AggregateError` once dispatch completes.
 
