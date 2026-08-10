@@ -41,7 +41,7 @@ my-server/
 ```
 
 Generated files include:
-- **package.json**: Dependencies for @cora/lib, @cora/db, @cora/ui (workspace linked until first npm publish), plus TypeScript, Vitest, and Biome
+- **package.json**: Dependencies for @cora/lib, @cora/db, @cora/cli, kysely (workspace linked until first npm publish), plus TypeScript, Vitest, and Biome devDependencies
 - **tsconfig.json**: TypeScript configuration targeting ES2022 with strict mode
 - **biome.json**: Code formatter and linter configuration
 - **.gitignore**: Standard Node.js exclusions
@@ -67,11 +67,10 @@ Then:
 
 ## Note: Pre-release Packages
 
-The `@cora` packages are not yet published to npm. Until the first release, the generated `package.json` uses workspace ranges (e.g., `workspace:*`) or local linking. If working in the CORA monorepo, this is automatic. If scaffolding outside the repo, manually link the packages:
+The `@cora` packages are not yet published to npm. Until the first release, the generated `package.json` uses workspace ranges (e.g., `^0.1.0`) or local linking. If working in the CORA monorepo, this is automatic. If scaffolding outside the repo, manually link the packages:
 
 ```sh
-pnpm link /path/to/cora/packages/cli
-pnpm link /path/to/cora/packages/db
 pnpm link /path/to/cora/packages/lib
-pnpm link /path/to/cora/packages/ui
+pnpm link /path/to/cora/packages/db
+pnpm link /path/to/cora/packages/cli
 ```

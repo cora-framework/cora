@@ -28,9 +28,9 @@ This command verifies:
 Output format:
 
 ```
-[ok] node    node 22.0.0 satisfies the minimum (>= 22)
-[ok] pnpm    pnpm 9.1.0 satisfies the minimum (>= 9)
-[ok] platform running on linux
+[ok] node      node 24.14.0 satisfies the minimum (>= 22)
+[ok] pnpm      pnpm 10.4.0 satisfies the minimum (>= 9)
+[ok] platform  running on win32
 ```
 
 Exit codes:
