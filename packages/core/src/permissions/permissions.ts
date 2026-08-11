@@ -53,9 +53,14 @@ export interface Permissions {
 
 /**
  * A stored permission matches a query permission if it is identical, or if
- * it ends in `.*` and the query starts with everything before the `*`
- * (e.g. stored `"cora.admin.*"` matches query `"cora.admin.kick"`, but not
- * bare `"cora.admin"` - the wildcard only covers a strict sub-permission).
+ * it ends in `.*` and the query starts with everything before the `*`.
+ *
+ * The wildcard is a subtree match, not a single-segment match: stored
+ * `"cora.admin.*"` matches `"cora.admin.kick"` AND the deeper
+ * `"cora.admin.kick.force"`, and stored `"cora.*"` matches anything under
+ * `cora.` at any depth (e.g. `"cora.anything.deep"`). It never matches the
+ * bare prefix without a trailing segment - stored `"cora.admin.*"` does NOT
+ * match query `"cora.admin"` itself, only permissions strictly under it.
  */
 function matchesPermission(stored: string, query: string): boolean {
   if (stored === query) return true
@@ -162,7 +167,16 @@ export function createPermissions(db: CoraDb): Permissions {
         .execute()
 
       for (const roleRow of roleRows) {
-        const storedPermissions: string[] = JSON.parse(roleRow.permissions)
+        let storedPermissions: string[]
+        try {
+          storedPermissions = JSON.parse(roleRow.permissions)
+        } catch {
+          // A corrupted permissions column (bad migration, manual edit,
+          // storage bit-rot) must not crash a permission check - treat that
+          // role as granting nothing and keep evaluating the player's other
+          // roles. Fail closed, not open.
+          continue
+        }
         if (
           storedPermissions.some((stored) =>
             matchesPermission(stored, permission),

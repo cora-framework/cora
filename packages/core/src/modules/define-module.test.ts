@@ -41,4 +41,10 @@ describe("defineModule", () => {
   it("throws for an empty id", () => {
     expect(() => defineModule({ id: "", register() {} })).toThrow(/kebab-case/)
   })
+
+  it('throws for the reserved id "core"', () => {
+    expect(() => defineModule({ id: "core", register() {} })).toThrow(
+      /reserved/,
+    )
+  })
 })

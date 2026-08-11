@@ -122,5 +122,10 @@ export function defineModule(def: CoraModule): CoraModule {
       `Module id "${def.id}" is not valid kebab-case (expected e.g. "my-module")`,
     )
   }
+  if (def.id === "core") {
+    throw new TypeError(
+      `Module id "core" is reserved for the kernel (it owns the "core" migrations namespace for permissions); choose a different id`,
+    )
+  }
   return def
 }
