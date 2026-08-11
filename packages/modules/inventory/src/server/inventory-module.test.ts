@@ -239,8 +239,8 @@ describe("inventory module rpc flows", () => {
       expect(refreshCallsFor(clientCalls)).toEqual([])
     })
 
-    it("returns not_active_character before checking permission", async () => {
-      const { invokeRpc, clientCalls } = await boot({
+    it("succeeds against a character that is not the caller's active one (admin tooling)", async () => {
+      const { invokeRpc, clientCalls, db } = await boot({
         grantGivePermission: true,
       })
 
@@ -250,8 +250,23 @@ describe("inventory module rpc flows", () => {
         PLAYER_ID,
       )) as GiveItemResult
 
-      expect(result).toEqual({ ok: false, error: "not_active_character" })
-      expect(refreshCallsFor(clientCalls)).toEqual([])
+      expect(result).toEqual({ ok: true })
+      await Promise.resolve()
+      expect(refreshCallsFor(clientCalls)).toEqual([
+        {
+          playerId: PLAYER_ID,
+          name: CORA_INVENTORY_UI_REFRESH,
+          payload: { characterId: OTHER_CHARACTER_ID },
+        },
+      ])
+
+      const rows = await db
+        .selectFrom("inventory_slots")
+        .selectAll()
+        .where("character_id", "=", OTHER_CHARACTER_ID)
+        .execute()
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.quantity).toBe(2)
     })
 
     it("succeeds and pushes ui.refresh when granted the permission", async () => {

@@ -109,14 +109,20 @@ function invalidInput(error: z.ZodError): InventoryErrorResult {
  * inside `src/server/operations.ts` commits or rolls back as one unit. `get`
  * is read-only and does not open a transaction.
  *
- * Every player-invoked handler (including `get`) first checks
+ * Every player-invoked handler except `give` (that is: `get`, `move`,
+ * `split`, `remove`, `equip`) first checks
  * `isActiveCharacter(playerId, characterId)` and fails closed with
  * `not_active_character` when it returns false, so a player can never read
  * or mutate an inventory belonging to a character they are not currently
- * playing. `give` additionally requires the caller hold the
- * `cora.inventory.give` permission (checked via `ctx.permissions`), failing
- * closed with `permission_denied` otherwise - it is meant for admin/server
- * tooling, not ordinary players.
+ * playing.
+ *
+ * `give` is admin/server tooling, not an ordinary player action, and is
+ * authorized purely by the caller holding the `cora.inventory.give`
+ * permission (checked via `ctx.permissions`), failing closed with
+ * `permission_denied` otherwise. It is deliberately NOT gated by
+ * `isActiveCharacter`: the textbook use case is an admin granting an item to
+ * a character that is not their own active one (or not even their own
+ * character at all), which an `isActiveCharacter` check would wrongly block.
  *
  * After every successful mutation, a `cora.inventory.ui.refresh` push is
  * sent to the calling player fire-and-forget (its rejection is caught and
@@ -234,12 +240,10 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId, itemId, quantity } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
-      if (!active) return { ok: false, error: "not_active_character" }
-
+      // No isActiveCharacter check here on purpose: give is admin/server
+      // tooling authorized purely by the cora.inventory.give permission, and
+      // must be able to target a character that is not the caller's own
+      // active one - see the docstring on `createInventoryHandlers` above.
       const permitted = await ctx.permissions.hasPermission(
         playerId,
         CORA_INVENTORY_GIVE_PERMISSION,
