@@ -18,10 +18,21 @@ export const CORA_INVENTORY_UI_REFRESH = "cora.inventory.ui.refresh"
 /** Permission required to invoke `cora.inventory.give` (admin/server tooling). */
 export const CORA_INVENTORY_GIVE_PERMISSION = "cora.inventory.give"
 
-/** A single occupied inventory slot, as returned by `cora.inventory.get`. */
+/**
+ * A single occupied inventory slot, as returned by `cora.inventory.get`.
+ *
+ * `label` is the item's display label, resolved server-side from the
+ * configured catalog (`ItemDefinition.label`, see `../catalog.ts`) and
+ * denormalized directly onto the slot - mirroring how `@cora-framework/characters`'
+ * `CharacterSummary.name` ships directly rather than requiring the UI to
+ * resolve a display name from a separate lookup. This keeps `InventoryGrid`
+ * (see `../ui/InventoryGrid.tsx`) self-contained: it never needs a
+ * `labelFor`-style callback or its own copy of the catalog.
+ */
 export interface InventorySlot {
   slot: number
   itemId: string
+  label: string
   quantity: number
   equipped: boolean
 }

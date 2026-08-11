@@ -25,7 +25,6 @@ import {
   createMockInventorySlots,
   createMockNotifications,
   mockCatalogCategoryFor,
-  mockInventoryLabelFor,
   mockRpc,
 } from "./mock"
 
@@ -44,6 +43,7 @@ function withContent(slotNumber: number, content: SlotView): SlotView {
   return {
     slot: slotNumber,
     ...(content.itemId !== undefined ? { itemId: content.itemId } : {}),
+    ...(content.label !== undefined ? { label: content.label } : {}),
     ...(content.quantity !== undefined ? { quantity: content.quantity } : {}),
     ...(content.equipped !== undefined ? { equipped: content.equipped } : {}),
   }
@@ -269,6 +269,7 @@ export function App(): JSX.Element {
       const toContent: SlotView = {
         slot: toSlot,
         itemId: from.itemId,
+        ...(from.label !== undefined ? { label: from.label } : {}),
         quantity,
       }
       return current.map((slot) => {
@@ -427,7 +428,6 @@ export function App(): JSX.Element {
           onMove={handleInventoryMove}
           onSplit={handleInventorySplit}
           onEquip={handleInventoryEquip}
-          labelFor={mockInventoryLabelFor}
         />
         <div className="harness-log">
           <h3>Action log</h3>

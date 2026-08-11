@@ -8,15 +8,6 @@ afterEach(() => {
   cleanup()
 })
 
-const LABELS: Record<string, string> = {
-  "medium-pistol": "Medium Pistol",
-  "stim-pack": "Stim Pack",
-}
-
-function labelFor(itemId: string): string {
-  return LABELS[itemId] ?? itemId
-}
-
 function noop(): void {}
 
 function buildSlots(
@@ -25,11 +16,24 @@ function buildSlots(
   const base: SlotView[] = Array.from({ length: 8 }, (_, index) => ({
     slot: index,
   }))
-  base[0] = { slot: 0, itemId: "medium-pistol", quantity: 1, equipped: false }
-  base[1] = { slot: 1, itemId: "stim-pack", quantity: 5, equipped: false }
+  base[0] = {
+    slot: 0,
+    itemId: "medium-pistol",
+    label: "Medium Pistol",
+    quantity: 1,
+    equipped: false,
+  }
+  base[1] = {
+    slot: 1,
+    itemId: "stim-pack",
+    label: "Stim Pack",
+    quantity: 5,
+    equipped: false,
+  }
   base[2] = {
     slot: 2,
     itemId: "medium-pistol",
+    label: "Medium Pistol",
     quantity: 1,
     equipped: true,
   }
@@ -51,7 +55,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     expect(screen.getAllByText("Medium Pistol").length).toBeGreaterThan(0)
@@ -68,7 +71,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     const emptySlotButton = screen.getByLabelText("Slot 3, empty")
@@ -84,7 +86,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     expect(
@@ -101,7 +102,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     const progress = screen.getByRole("progressbar")
@@ -120,7 +120,6 @@ describe("InventoryGrid", () => {
         onMove={onMove}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     await user.click(screen.getByLabelText(/Slot 0,/))
@@ -139,7 +138,6 @@ describe("InventoryGrid", () => {
         onMove={onMove}
         onSplit={noop}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     const sourceButton = screen.getByLabelText(/Slot 0,/)
@@ -160,7 +158,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={noop}
         onEquip={onEquip}
-        labelFor={labelFor}
       />,
     )
     const equipButtons = screen.getAllByText("Equip")
@@ -179,7 +176,6 @@ describe("InventoryGrid", () => {
         onMove={noop}
         onSplit={onSplit}
         onEquip={noop}
-        labelFor={labelFor}
       />,
     )
     // Slot 1 (Stim Pack x5) is the only slot with quantity > 1, so select it

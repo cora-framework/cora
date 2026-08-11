@@ -13,29 +13,30 @@ import { useState } from "react"
  * client resource) are expected to materialize a full `SlotView[]` - one
  * entry per slot index up to the configured capacity - by merging the
  * occupied `InventorySlot[]` from `cora.inventory.get` into a dense array,
- * leaving `itemId`/`quantity`/`equipped` unset for empty slots.
+ * leaving `itemId`/`label`/`quantity`/`equipped` unset for empty slots.
  *
- * The contract also never resolves an item id to a display label (the
- * catalog is server-side deployment config, not part of the rpc payload -
- * see `../catalog.ts`), so this component takes a `labelFor` callback rather
- * than expecting a `label` field on `SlotView` itself.
+ * `label` mirrors the contract's `InventorySlot.label` (see `../contract.ts`):
+ * the server resolves it from the configured catalog and denormalizes it
+ * directly onto each filled slot, so this component reads `slot.label`
+ * directly rather than taking a `labelFor` callback.
  */
 export interface SlotView {
   slot: number
   itemId?: string
+  label?: string
   quantity?: number
   equipped?: boolean
 }
 
 const MIN_SPLIT_QUANTITY = 1
 
-function slotAriaLabel(slot: SlotView, label: string | undefined): string {
-  if (slot.itemId === undefined || label === undefined) {
+function slotAriaLabel(slot: SlotView): string {
+  if (slot.itemId === undefined || slot.label === undefined) {
     return `Slot ${slot.slot}, empty`
   }
   const qty = slot.quantity ?? 1
   const equipped = slot.equipped === true ? ", equipped" : ""
-  return `Slot ${slot.slot}, ${label} x${qty}${equipped}`
+  return `Slot ${slot.slot}, ${slot.label} x${qty}${equipped}`
 }
 
 /**
@@ -69,7 +70,6 @@ export function InventoryGrid({
   onMove,
   onSplit,
   onEquip,
-  labelFor,
 }: {
   slots: SlotView[]
   columns?: number
@@ -78,7 +78,6 @@ export function InventoryGrid({
   onMove: (fromSlot: number, toSlot: number) => void
   onSplit: (fromSlot: number, toSlot: number, quantity: number) => void
   onEquip: (slot: number) => void
-  labelFor: (itemId: string) => string
 }): JSX.Element {
   const [selectedSlot, setSelectedSlot] = useState<number | undefined>(
     undefined,
@@ -175,8 +174,7 @@ export function InventoryGrid({
         style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
       >
         {slots.map((slot) => {
-          const label =
-            slot.itemId !== undefined ? labelFor(slot.itemId) : undefined
+          const label = slot.label
           const isSelected = slot.slot === selectedSlot
           const isEmpty = slot.itemId === undefined
           const classNames = [
@@ -194,7 +192,7 @@ export function InventoryGrid({
               <button
                 type="button"
                 className="cora-inventory-slot-main"
-                aria-label={slotAriaLabel(slot, label)}
+                aria-label={slotAriaLabel(slot)}
                 aria-pressed={isSelected}
                 onClick={() => handleSlotClick(slot)}
               >

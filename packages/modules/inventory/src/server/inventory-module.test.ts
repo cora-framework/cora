@@ -223,6 +223,30 @@ describe("inventory module rpc flows", () => {
 
       expect(result.ok).toBe(true)
     })
+
+    it("resolves each filled slot's catalog label", async () => {
+      const { invokeRpc, db } = await boot()
+      await give(invokeRpc, "stim-pack", 2, createPermissions(db))
+
+      const result = (await invokeRpc(
+        CORA_INVENTORY_GET,
+        { characterId: CHARACTER_ID },
+        PLAYER_ID,
+      )) as GetInventoryResult
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.slots).toEqual([
+          {
+            slot: 0,
+            itemId: "stim-pack",
+            label: "Stim Pack",
+            quantity: 2,
+            equipped: false,
+          },
+        ])
+      }
+    })
   })
 
   describe("give", () => {

@@ -176,6 +176,12 @@ export function createInventoryHandlers(
       const slots: InventorySlot[] = rows.map((row) => ({
         slot: row.slot,
         itemId: row.item_id,
+        // Falls back to the raw item id when the id is not (or no longer)
+        // present in the configured catalog, matching the `usedWeight`
+        // fallback just below - a slot referencing an unknown item should
+        // still render something rather than throwing.
+        label:
+          resolvedOptions.catalog.byId.get(row.item_id)?.label ?? row.item_id,
         quantity: row.quantity,
         equipped: row.equipped !== 0,
       }))

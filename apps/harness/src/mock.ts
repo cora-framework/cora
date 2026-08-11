@@ -95,11 +95,41 @@ export function createMockInventorySlots(): SlotView[] {
     { length: MOCK_INVENTORY_SLOT_COUNT },
     (_, index) => ({ slot: index }),
   )
-  slots[0] = { slot: 0, itemId: "medium-pistol", quantity: 1, equipped: true }
-  slots[1] = { slot: 1, itemId: "combat-knife", quantity: 1, equipped: false }
-  slots[2] = { slot: 2, itemId: "stim-pack", quantity: 6, equipped: false }
-  slots[3] = { slot: 3, itemId: "armor-jacket", quantity: 1, equipped: false }
-  slots[4] = { slot: 4, itemId: "scrap-metal", quantity: 12, equipped: false }
+  slots[0] = {
+    slot: 0,
+    itemId: "medium-pistol",
+    label: mockInventoryLabelFor("medium-pistol"),
+    quantity: 1,
+    equipped: true,
+  }
+  slots[1] = {
+    slot: 1,
+    itemId: "combat-knife",
+    label: mockInventoryLabelFor("combat-knife"),
+    quantity: 1,
+    equipped: false,
+  }
+  slots[2] = {
+    slot: 2,
+    itemId: "stim-pack",
+    label: mockInventoryLabelFor("stim-pack"),
+    quantity: 6,
+    equipped: false,
+  }
+  slots[3] = {
+    slot: 3,
+    itemId: "armor-jacket",
+    label: mockInventoryLabelFor("armor-jacket"),
+    quantity: 1,
+    equipped: false,
+  }
+  slots[4] = {
+    slot: 4,
+    itemId: "scrap-metal",
+    label: mockInventoryLabelFor("scrap-metal"),
+    quantity: 12,
+    equipped: false,
+  }
   return slots
 }
 
