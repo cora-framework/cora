@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "UI components and theme tokens for the CORA framework.",
   "license": "MIT",
-  "homepage": "https://coraframework.dev",
+  "homepage": "https://github.com/cora-framework/cora",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cora-framework/cora.git",
