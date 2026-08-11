@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/inventory",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Server-authoritative character-bound slot inventory module for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",
