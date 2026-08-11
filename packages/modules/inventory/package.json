@@ -16,23 +16,39 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui/index.js"
+    },
+    "./ui/inventory-grid.css": "./dist/ui/inventory-grid.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/ui/inventory-grid.css','dist/ui/inventory-grid.css')\""
   },
   "dependencies": {
     "@cora-framework/core": "workspace:*",
     "@cora-framework/db": "workspace:*",
     "@cora-framework/lib": "workspace:*",
+    "@cora-framework/ui": "workspace:*",
     "kysely": "^0.28.0",
     "zod": "^4.4.3"
   },
+  "peerDependencies": {
+    "react": ">=18"
+  },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "typescript": "^5.9.3"
   }
 }

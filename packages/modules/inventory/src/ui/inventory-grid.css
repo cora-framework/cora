@@ -1,0 +1,142 @@
+/*
+ * Module-local styles for `InventoryGrid` (see `./InventoryGrid.tsx`).
+ *
+ * As with @cora-framework/characters' `character-select.css`, this file
+ * lives in @cora-framework/inventory, not in @cora-framework/ui/theme.css:
+ * theme.css only styles the generic `Dialog`/`ProgressBar` primitives it
+ * ships itself and must never know about a downstream module's classnames.
+ * Every rule below only reads `--cora-*` custom properties (defined by
+ * @cora-framework/ui/theme.css) rather than hardcoding colors, so this file
+ * still tracks the active theme. Consumers import both:
+ *
+ *   import "@cora-framework/ui/theme.css"
+ *   import "@cora-framework/inventory/ui/inventory-grid.css"
+ *
+ * See the package README's UI section for the full usage example.
+ */
+
+.cora-inventory-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--cora-font);
+}
+
+.cora-inventory-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.cora-inventory-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cora-inventory-slot-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+  cursor: pointer;
+  font-family: var(--cora-font);
+  padding: 4px;
+  text-align: center;
+}
+
+.cora-inventory-slot-empty .cora-inventory-slot-main {
+  color: var(--cora-muted);
+  box-shadow: inset 0 0 0 1px var(--cora-bg);
+}
+
+.cora-inventory-slot-selected .cora-inventory-slot-main {
+  box-shadow: inset 0 0 0 2px var(--cora-accent);
+}
+
+.cora-inventory-slot-main:hover {
+  box-shadow: inset 0 0 0 2px var(--cora-accent-2);
+}
+
+.cora-inventory-slot-label {
+  font-size: 0.75em;
+  overflow-wrap: anywhere;
+}
+
+.cora-inventory-slot-qty {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--cora-accent);
+}
+
+.cora-inventory-slot-equipped-marker {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: var(--cora-success);
+}
+
+.cora-inventory-slot-equip-button,
+.cora-inventory-slot-split-button {
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  padding: 2px 6px;
+  background: transparent;
+  color: var(--cora-muted);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+  font-family: var(--cora-font);
+  font-size: 0.7em;
+  cursor: pointer;
+}
+
+.cora-inventory-slot-equip-button:hover,
+.cora-inventory-slot-split-button:hover {
+  color: var(--cora-text);
+  box-shadow: inset 0 0 0 1px var(--cora-accent);
+}
+
+.cora-inventory-split-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--cora-muted);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.cora-inventory-split-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--cora-bg);
+  color: var(--cora-text);
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+  padding: 8px 10px;
+  font-family: var(--cora-font);
+  font-size: 1em;
+}
+
+.cora-inventory-split-input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cora-accent);
+}
+
+.cora-inventory-split-error {
+  margin: 4px 0 0;
+  color: var(--cora-danger);
+  font-size: 0.85em;
+}

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@cora-framework/characters": "workspace:*",
+    "@cora-framework/inventory": "workspace:*",
     "@cora-framework/ui": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
