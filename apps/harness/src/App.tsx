@@ -1,5 +1,8 @@
 import "@cora-framework/ui/theme.css"
+import "@cora-framework/characters/ui/character-select.css"
 import "./harness.css"
+import type { CharacterSummary } from "@cora-framework/characters"
+import { CharacterSelect } from "@cora-framework/characters/ui"
 import type {
   CoraNotification,
   MenuItem,
@@ -14,7 +17,9 @@ import {
 } from "@cora-framework/ui"
 import type { JSX } from "react"
 import { useEffect, useState } from "react"
-import { createMockNotifications, mockRpc } from "./mock"
+import { createMockCharacters, createMockNotifications, mockRpc } from "./mock"
+
+const MAX_MOCK_CHARACTERS = 4
 
 const NOTIFICATION_KINDS: NotificationKind[] = [
   "info",
@@ -131,6 +136,44 @@ export function App(): JSX.Element {
     }
   }, [])
 
+  const [characters, setCharacters] = useState<CharacterSummary[]>(() =>
+    createMockCharacters(),
+  )
+  const [characterLog, setCharacterLog] = useState<string[]>([])
+  const nextCharacterId =
+    Math.max(0, ...characters.map((character) => character.id)) + 1
+
+  function logCharacterAction(entry: string): void {
+    setCharacterLog((current) => [
+      `${new Date().toLocaleTimeString()} - ${entry}`,
+      ...current,
+    ])
+  }
+
+  function handleCharacterSelect(id: number): void {
+    const character = characters.find((item) => item.id === id)
+    logCharacterAction(`selected "${character?.name ?? id}"`)
+  }
+
+  function handleCharacterCreate(name: string): void {
+    const now = new Date().toISOString()
+    const created: CharacterSummary = {
+      id: nextCharacterId,
+      name,
+      appearance: null,
+      createdAt: now,
+      lastPlayedAt: null,
+    }
+    setCharacters((current) => [...current, created])
+    logCharacterAction(`created "${name}"`)
+  }
+
+  function handleCharacterDelete(id: number): void {
+    const character = characters.find((item) => item.id === id)
+    setCharacters((current) => current.filter((item) => item.id !== id))
+    logCharacterAction(`deleted "${character?.name ?? id}"`)
+  }
+
   return (
     <div className="harness">
       <header className="harness-header">
@@ -206,6 +249,33 @@ export function App(): JSX.Element {
         <h2>Progress</h2>
         <ProgressBar label="Animated" value={animatedProgress} />
         <ProgressBar label="Static (72 of 100)" value={72} />
+      </section>
+
+      <section className="harness-section">
+        <h2>Characters</h2>
+        <p className="harness-status">
+          @cora-framework/characters' CharacterSelect, rendered with mock data
+          (max {MAX_MOCK_CHARACTERS} characters).
+        </p>
+        <CharacterSelect
+          characters={characters}
+          maxCharacters={MAX_MOCK_CHARACTERS}
+          onSelect={handleCharacterSelect}
+          onCreate={handleCharacterCreate}
+          onDelete={handleCharacterDelete}
+        />
+        <div className="harness-log">
+          <h3>Action log</h3>
+          {characterLog.length === 0 ? (
+            <p className="harness-log-empty">No actions yet.</p>
+          ) : (
+            <ul>
+              {characterLog.map((entry) => (
+                <li key={entry}>{entry}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
     </div>
   )

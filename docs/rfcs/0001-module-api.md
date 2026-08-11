@@ -104,6 +104,8 @@ await kernel.shutdown()
 | `onDamage(handler)` | `(targetId: number, attackerId: number \| null, amount: number)` | A damage event is applied to an entity. |
 | `onResourceStop(handler)` | `()` | The hosting resource is stopping. |
 
+`onDamage`'s `attackerId` passes the upstream value through as-is; unlike `onPlayerDeath`'s `killerId`, the no-attacker representation for damage has not yet been verified against a live server and may change in a minor release once it has been. `onPlayerDeath`'s `null` semantics are reliable.
+
 These five are the entire stable surface. Every other candidate lifecycle signal - spawn events, vehicle events, streaming/culling events, and similar - is deliberately excluded from `PlatformEvents` and from `KernelHooks` for this release. The reason is not that those signals are unimportant; it is that only these five events are validated by real-world usage in the CyberMP ecosystem today. A hook the kernel promises as stable is a hook module authors will build persistent game logic against, and a promise the kernel cannot keep is worse than no promise at all. As spawn, vehicle, and streaming surfaces accumulate verified real-world usage, they will be promoted into `PlatformEvents`/`KernelHooks` through a future RFC; until then they belong under an `experimental` namespace, gated and clearly documented as unverified, rather than in this stable table.
 
 The kernel subscribes to each of these five platform events exactly once and fans them out to every module handler registered for that event. If one handler throws, the kernel logs the error via `platform.log("error", ...)` and continues invoking the remaining handlers for that dispatch - one throwing hook never suppresses another module's hook for the same event.

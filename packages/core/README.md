@@ -61,6 +61,8 @@ A module whose `register()` throws is disabled and logged instead of crashing th
 | `onDamage(handler)` | `(targetId: number, attackerId: number \| null, amount: number)` | A damage event is applied to an entity. |
 | `onResourceStop(handler)` | `()` | The hosting resource is stopping. |
 
+`onDamage`'s `attackerId` passes the upstream value through as-is; unlike `onPlayerDeath`'s `killerId`, the no-attacker representation for damage has not yet been verified against a live server and may change in a minor release once it has been. `onPlayerDeath`'s `null` semantics are reliable.
+
 Every registration method returns an unsubscribe function:
 
 ```ts

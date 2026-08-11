@@ -18,7 +18,12 @@ import type { CoraPlayer, PlatformEvents } from "../types.js"
  *   Upstream's single event covers both "who got hit" and "who hit them" in
  *   one payload (`data.killerId`, `data.totalDamage`); CORA's stable
  *   `damage` hook splits this into `(targetId, attackerId, amount)` so
- *   modules never need to know the upstream field names.
+ *   modules never need to know the upstream field names. Unlike
+ *   `playerDeath`, upstream's `data.killerId` for `damage` is a required
+ *   number with no documented "no attacker" sentinel, so it is passed
+ *   through as-is (not normalized to `null`); see
+ *   `createDamageKillerIdAnomalyLogger` below for the anomaly guard this
+ *   implies.
  * - `resourceStop()` -> `PlatformEvents.resourceStop`, no payload either
  *   side.
  *
@@ -49,12 +54,48 @@ function toAttackerId(killerId: number | undefined): number | null {
 }
 
 /**
+ * `DamageEventData.killerId` is a required `number` upstream with no
+ * documented sentinel for "no attacker" - the no-attacker sentinel for
+ * damage is undocumented upstream; values are forwarded unchanged and
+ * anomalies logged. This is unlike
+ * `PlayerDeathEventData.killerId`, which is optional and reliably maps to
+ * `null`. Two values are the most likely "no human attacker" signals
+ * (self-damage / environmental-or-NPC damage): `killerId === targetId`, and
+ * negative `killerId`. Until a real sentinel is observed against a live
+ * server, this only logs a warning (once per distinct anomalous value, so a
+ * running server does not get spammed) - it never throws, and the mapping
+ * still forwards `killerId` through unchanged.
+ *
+ * Pulled out as a standalone factory (rather than inlined in
+ * `bindNativeEvents`) so it can be unit-tested without a `MpServer`: it only
+ * ever sees plain numbers, never the native `mp` global.
+ */
+export function createDamageKillerIdAnomalyLogger(
+  warn: (message: string) => void = (message) =>
+    console.warn(`[warn] ${message}`),
+): (killerId: number, targetId: number) => void {
+  const loggedValues = new Set<number>()
+
+  return (killerId, targetId) => {
+    const isAnomalous = killerId === targetId || killerId < 0
+    if (!isAnomalous || loggedValues.has(killerId)) {
+      return
+    }
+    loggedValues.add(killerId)
+    warn(
+      `unexpected damage killerId value ${killerId} (no-attacker sentinel unknown upstream); please report`,
+    )
+  }
+}
+
+/**
  * Subscribes to the native `mp.events` surface and forwards each of the
  * five stable events onto a fresh `TypedEmitter<PlatformEvents>`, which
  * becomes `CoraPlatform.events`.
  */
 export function bindNativeEvents(mp: MpServer): TypedEmitter<PlatformEvents> {
   const emitter = new TypedEmitter<PlatformEvents>()
+  const warnDamageKillerIdAnomaly = createDamageKillerIdAnomalyLogger()
 
   mp.events.on("playerConnected", (playerId) => {
     emitter.emit("playerConnected", resolveCoraPlayer(mp, playerId))
@@ -73,6 +114,7 @@ export function bindNativeEvents(mp: MpServer): TypedEmitter<PlatformEvents> {
   })
 
   mp.events.on("damage", (playerId, data) => {
+    warnDamageKillerIdAnomaly(data.killerId, playerId)
     emitter.emit(
       "damage",
       playerId,
