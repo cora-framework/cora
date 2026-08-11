@@ -80,6 +80,22 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/core:
+    dependencies:
+      '@cora-framework/db':
+        specifier: workspace:*
+        version: link:../db
+      '@cora-framework/lib':
+        specifier: workspace:*
+        version: link:../lib
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/create-cora-server:
     dependencies:
       '@cora-framework/lib':

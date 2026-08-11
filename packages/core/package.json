@@ -1,0 +1,36 @@
+{
+  "name": "@cora-framework/core",
+  "version": "0.1.0",
+  "description": "Kernel and platform adapter for the CORA framework.",
+  "license": "MIT",
+  "homepage": "https://github.com/cora-framework/cora",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cora-framework/cora.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cora-framework/db": "workspace:*",
+    "@cora-framework/lib": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
