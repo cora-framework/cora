@@ -2,6 +2,7 @@ import type { CoraDb, CoraMigration } from "@cora-framework/db"
 import type { Locale } from "@cora-framework/lib"
 import type { CoraPlatform, PlatformEvents } from "../adapter/types.js"
 import type { Permissions } from "../permissions/permissions.js"
+import type { ServiceRegistry } from "../services/services.js"
 
 /**
  * Unsubscribe function returned by every `KernelHooks` registration method.
@@ -93,6 +94,16 @@ export interface CoraModuleContext {
    */
   config: Record<string, unknown>
   permissions: Permissions
+  /**
+   * The kernel's cross-module service registry. One `ServiceRegistry`
+   * instance is created at boot and the SAME instance is handed to every
+   * module's `ctx`, so a token `provide`d by one module's `register()` is
+   * visible via `get` from any other module - typically resolved lazily,
+   * at use-time (e.g. inside an rpc handler), so registration order across
+   * modules does not matter. Its lifetime is the kernel's lifetime: it is
+   * not cleared by `shutdown()`. See `docs/rfcs/0002-kernel-services.md`.
+   */
+  services: ServiceRegistry
 }
 
 /**

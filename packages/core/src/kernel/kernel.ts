@@ -13,6 +13,7 @@ import {
   corePermissionsMigrations,
   createPermissions,
 } from "../permissions/permissions.js"
+import { createServiceRegistry } from "../services/services.js"
 
 export type {
   CoraModule,
@@ -207,6 +208,11 @@ export async function createKernel(
     options.locale ?? createLocale({ locales: { en: {} }, fallback: "en" })
   const config = options.config ?? {}
   const permissions = createPermissions(db)
+  // Created once per kernel boot; the same instance is handed to every
+  // module's ctx below, so a token `provide`d by one module is visible to
+  // any other via `get`. Lifetime = kernel lifetime (not cleared by
+  // shutdown()). See docs/rfcs/0002-kernel-services.md.
+  const services = createServiceRegistry()
 
   const seenIds = new Set<string>()
   for (const module of modules) {
@@ -309,6 +315,7 @@ export async function createKernel(
       locale,
       config,
       permissions,
+      services,
     }
 
     try {
