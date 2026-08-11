@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Command-line tooling for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",

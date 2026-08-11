@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "UI components and theme tokens for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",

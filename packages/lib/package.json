@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/lib",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared utilities for the CORA framework - standalone-usable.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",
