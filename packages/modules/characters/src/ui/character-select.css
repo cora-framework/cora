@@ -1,0 +1,84 @@
+/*
+ * Module-local styles for `CharacterSelect` (see `./CharacterSelect.tsx`).
+ *
+ * This file intentionally lives in @cora-framework/characters, not in
+ * @cora-framework/ui/theme.css: theme.css only styles the generic
+ * `Menu`/`Dialog`/`Notifications`/`ProgressBar` primitives it ships itself
+ * and must never know about a downstream module's classnames. Every rule
+ * below only reads `--cora-*` custom properties (defined by
+ * @cora-framework/ui/theme.css) rather than hardcoding colors, so this file
+ * still tracks the active theme. Consumers import both:
+ *
+ *   import "@cora-framework/ui/theme.css"
+ *   import "@cora-framework/characters/ui/character-select.css"
+ *
+ * See the package README's UI section for the full usage example.
+ */
+
+.cora-character-select {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--cora-font);
+}
+
+.cora-character-select-empty {
+  margin: 0;
+  color: var(--cora-muted);
+  font-size: 0.9em;
+}
+
+.cora-character-select-delete-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cora-character-select-delete-button {
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--cora-danger);
+  box-shadow: inset 0 0 0 1px var(--cora-danger);
+  font-family: var(--cora-font);
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.cora-character-select-delete-button:hover {
+  background: var(--cora-danger);
+  color: var(--cora-bg);
+}
+
+.cora-character-select-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--cora-muted);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.cora-character-select-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--cora-bg);
+  color: var(--cora-text);
+  border: none;
+  border-radius: calc(var(--cora-radius) - 4px);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+  padding: 8px 10px;
+  font-family: var(--cora-font);
+  font-size: 1em;
+}
+
+.cora-character-select-input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--cora-accent);
+}
+
+.cora-character-select-error {
+  margin: 4px 0 0;
+  color: var(--cora-danger);
+  font-size: 0.85em;
+}

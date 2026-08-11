@@ -1,4 +1,5 @@
 import "@cora-framework/ui/theme.css"
+import "@cora-framework/characters/ui/character-select.css"
 import "./harness.css"
 import type { CharacterSummary } from "@cora-framework/characters"
 import { CharacterSelect } from "@cora-framework/characters/ui"

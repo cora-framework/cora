@@ -20,14 +20,15 @@
     "./ui": {
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js"
-    }
+    },
+    "./ui/character-select.css": "./dist/ui/character-select.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/ui/character-select.css','dist/ui/character-select.css')\""
   },
   "dependencies": {
     "@cora-framework/core": "workspace:*",
