@@ -35,6 +35,7 @@ export type PlayerSession = PlayingSession | NonPlayingSession
  */
 export class SessionManager {
   private readonly sessions = new Map<number, PlayerSession>()
+  private readonly connectEpochs = new Map<number, number>()
 
   /** The player's current session, or `undefined` if not tracked (never
    * connected, or already disconnected/cleared). */
@@ -42,9 +43,36 @@ export class SessionManager {
     return this.sessions.get(playerId)
   }
 
-  /** Creates (or replaces) the player's session in `"selecting"` state. */
-  startSelecting(playerId: number): void {
+  /**
+   * Creates (or replaces) the player's session in `"selecting"` state,
+   * synchronously - `register()`'s `playerConnected` hook calls this before
+   * doing any `await`, so a synchronous rpc call (e.g. `select`) that
+   * happens to run immediately after `playerConnected` fires already sees
+   * this session, even though the async character-list fetch and the
+   * `cora.characters.ui.open` push that follow have not resolved yet.
+   *
+   * Returns a monotonically increasing "connect epoch" for the player,
+   * starting at 1. A rapid reconnect (a second `playerConnected` for the
+   * same player before the first connect's async work has finished) calls
+   * this again and gets a higher epoch; the first flow's `epoch` argument to
+   * `isCurrentConnectEpoch` then reads as stale, letting the caller skip
+   * delivering an outdated `ui.open` character list after a fresher one.
+   */
+  startSelecting(playerId: number): number {
+    const epoch = (this.connectEpochs.get(playerId) ?? 0) + 1
+    this.connectEpochs.set(playerId, epoch)
     this.sessions.set(playerId, { status: "selecting", characterId: null })
+    return epoch
+  }
+
+  /**
+   * Whether `epoch` (as returned by a prior `startSelecting` call) is still
+   * the player's most recent connect. `false` means a later connect has
+   * superseded it - the caller should skip whatever it was about to do on
+   * behalf of the stale flow (e.g. pushing `ui.open`).
+   */
+  isCurrentConnectEpoch(playerId: number, epoch: number): boolean {
+    return this.connectEpochs.get(playerId) === epoch
   }
 
   /** Transitions the player's session to `"playing"` the given character. */

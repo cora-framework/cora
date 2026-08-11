@@ -272,17 +272,47 @@ export function createCharactersModule(
 
       // playerConnected -> track the session (state "selecting") and push
       // the player's own character list to open the select UI client-side.
+      //
+      // `sessions.startSelecting` runs synchronously (see its docstring),
+      // so the session already exists for any rpc call that happens to run
+      // immediately after this hook fires. Everything from `handlers.list`
+      // onward is async and fire-and-forget: the kernel's event dispatch
+      // only wraps the synchronous part of a hook handler in a try/catch
+      // (see `Kernel.dispatch`), so a rejection surfacing later on the
+      // microtask queue would otherwise become an unhandled rejection - the
+      // trailing `.catch` below is what prevents that.
+      //
+      // `epoch` guards against a rapid reconnect: if a second
+      // `playerConnected` for the same player fires (and calls
+      // `startSelecting` again, bumping the epoch) before this flow's
+      // `handlers.list` resolves, this flow is now stale and must not push
+      // an outdated character list after the fresher connect's `ui.open`.
+      // We skip silently (not an error - just a superseded flow) rather
+      // than logging.
       ctx.hooks.onPlayerConnected((player) => {
-        sessions.startSelecting(player.id)
-        void handlers.list({}, player.id).then((result) => {
-          const characters = result.ok ? result.characters : []
-          const openPayload: CharactersUiOpenPayload = { characters }
-          return ctx.platform.callClient(
-            player.id,
-            CORA_CHARACTERS_UI_OPEN,
-            openPayload,
-          )
-        })
+        const epoch = sessions.startSelecting(player.id)
+        void handlers
+          .list({}, player.id)
+          .then((result) => {
+            if (!sessions.isCurrentConnectEpoch(player.id, epoch)) {
+              return undefined
+            }
+            const characters = result.ok ? result.characters : []
+            const openPayload: CharactersUiOpenPayload = { characters }
+            return ctx.platform.callClient(
+              player.id,
+              CORA_CHARACTERS_UI_OPEN,
+              openPayload,
+            )
+          })
+          .catch((error) => {
+            const message =
+              error instanceof Error ? error.message : String(error)
+            ctx.log(
+              "error",
+              `player ${player.id}: connect flow (character list / ui.open) failed: ${message}`,
+            )
+          })
       })
 
       // playerDisconnected -> position persistence placeholder: the client
@@ -291,17 +321,30 @@ export function createCharactersModule(
       // (re)write nulls rather than leaving the previous stored position in
       // place, documenting "no position stored" as the deliberate
       // placeholder state until a real position-reporting flow exists. The
-      // session is then cleared regardless of what state it was in.
+      // session is cleared synchronously regardless of what state it was
+      // in, before the (fire-and-forget) db write below is even started.
       ctx.hooks.onPlayerDisconnected((player) => {
         const characterId = sessions.activeCharacterId(player.id)
+        sessions.clear(player.id)
         if (characterId !== null) {
+          // Same rationale as the connect flow above: this write happens
+          // after the kernel's synchronous dispatch try/catch has already
+          // returned, so a rejection here must be caught explicitly or it
+          // becomes an unhandled rejection.
           void db
             .updateTable("characters")
             .set({ position_x: null, position_y: null, position_z: null })
             .where("id", "=", characterId)
             .execute()
+            .catch((error) => {
+              const message =
+                error instanceof Error ? error.message : String(error)
+              ctx.log(
+                "error",
+                `player ${player.id}: disconnect flow (position-null persistence) failed: ${message}`,
+              )
+            })
         }
-        sessions.clear(player.id)
       })
 
       // playerDeath while playing -> session state is left untouched (stays
