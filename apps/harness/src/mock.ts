@@ -1,9 +1,36 @@
+import type { CharacterSummary } from "@cora-framework/characters"
 import type { CoraNotification } from "@cora-framework/ui"
 
 // Placeholder mock data layer for the harness. This will eventually be
 // replaced by a typed RPC mock layer that mirrors the real CORA transport,
 // once that contract exists. For now it only provides static demo data
 // and a small artificial-delay helper.
+
+export function createMockCharacters(): CharacterSummary[] {
+  return [
+    {
+      id: 1,
+      name: "Alice Vance",
+      appearance: null,
+      createdAt: "2026-01-01T12:00:00.000Z",
+      lastPlayedAt: "2026-01-05T18:30:00.000Z",
+    },
+    {
+      id: 2,
+      name: "Bjorn Ostergaard",
+      appearance: null,
+      createdAt: "2026-01-02T09:15:00.000Z",
+      lastPlayedAt: null,
+    },
+    {
+      id: 3,
+      name: "Judy Alvarez",
+      appearance: null,
+      createdAt: "2026-01-03T20:45:00.000Z",
+      lastPlayedAt: "2026-01-04T08:00:00.000Z",
+    },
+  ]
+}
 
 export function createMockNotifications(): CoraNotification[] {
   return [
