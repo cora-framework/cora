@@ -1,0 +1,47 @@
+{
+  "name": "@cora-framework/core",
+  "version": "0.1.0",
+  "description": "Kernel and platform adapter for the CORA framework.",
+  "license": "MIT",
+  "homepage": "https://github.com/cora-framework/cora",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cora-framework/cora.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cybermp": {
+      "types": "./dist/adapter/cybermp.d.ts",
+      "import": "./dist/adapter/cybermp.js"
+    },
+    "./experimental": {
+      "types": "./dist/experimental/index.d.ts",
+      "import": "./dist/experimental/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cora-framework/db": "workspace:*",
+    "@cora-framework/lib": "workspace:*",
+    "@cybermp/rpc-server": "0.2.0",
+    "@cybermp/server-types": "3.2.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3"
+  }
+}
