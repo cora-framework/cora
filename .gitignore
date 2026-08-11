@@ -10,5 +10,10 @@ coverage/
 Thumbs.db
 .superpowers/
 
+# editor and tooling noise
+.vscode/
+.idea/
+*.log
+
 # internal planning docs (kept local, not published)
 docs/superpowers/
