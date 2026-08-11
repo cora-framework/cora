@@ -127,6 +127,29 @@ A module declares its schema with `migrations` on the object passed to `defineMo
 
 The kernel and every module depend only on the `CoraPlatform` interface (`src/adapter/types.ts`) - never on the underlying game runtime directly. `createTestPlatform` (used above) is the in-memory implementation for headless tests and local development; the production adapter targets the CyberMP runtime and ships in this same package.
 
+## CyberMP adapter
+
+`createCyberMpPlatform()` is the real `CoraPlatform` implementation, built on `@cybermp/rpc-server@0.2.0` and `@cybermp/server-types@3.2.5` (exact pins - see `packages/core/package.json`). It is **not** exported from `@cora-framework/core`'s main entry point, so importing the kernel/types alone never pulls `@cybermp/*` into your dependency graph. Import it from the `/cybermp` subpath instead, inside a real CyberMP server resource process:
+
+```ts
+import { createCyberMpPlatform } from "@cora-framework/core/cybermp"
+import { createKernel } from "@cora-framework/core"
+import { createDatabase, type CoraDbConfig } from "@cora-framework/db"
+
+function boot(dbConfig: CoraDbConfig) {
+  const platform = createCyberMpPlatform()
+  const db = createDatabase(dbConfig)
+
+  return createKernel({ platform, db, modules: [] })
+}
+```
+
+`createCyberMpPlatform` maps the five stable `PlatformEvents` onto the native `mp.events` bus (`playerConnected`, `playerDisconnected`, `playerDeath`, `damage`, `resourceStop`), bridges `registerRpcHandler`/`callClient` onto `@cybermp/rpc-server`'s `RpcServer.register`/`callClient`, and logs via `console` with a `[level]` prefix. It is compile-only: it typechecks against the real upstream packages, but constructing it requires a live CyberMP process (the native `mp` global injected into `globalThis`), so there is no lane-1 test for it beyond the import-boundary check - only `src/adapter/types.ts` and `createTestPlatform` are exercised headlessly. Only this file and its `src/adapter/cybermp/` submodules may import `@cybermp/*`; `src/adapter/import-boundary.test.ts` enforces that at the source-tree level.
+
+## Experimental platform surfaces
+
+`src/experimental/index.ts` (import from `@cora-framework/core/experimental`) holds native CyberMP surfaces that have real intended signatures but no in-game verification yet: `setNameplateText`, `createMapPin`, `removeMapPin`, `setHudElementVisible`, `grantNativeItem`, `openAppearanceEditor`. Every call throws `ExperimentalUnverifiedError` unless the `CORA_EXPERIMENTAL=1` environment variable is set, in which case it throws `NotImplementedError` instead - a fence, not an implementation. These land for real in a later CORA phase (2b/2c) once verified against a running game client.
+
 ## Exports
 
 ```ts

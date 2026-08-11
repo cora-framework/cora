@@ -88,10 +88,19 @@ importers:
       '@cora-framework/lib':
         specifier: workspace:*
         version: link:../lib
+      '@cybermp/rpc-server':
+        specifier: 0.2.0
+        version: 0.2.0(@cybermp/server-types@3.2.5)
+      '@cybermp/server-types':
+        specifier: 3.2.5
+        version: 3.2.5
       zod:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -576,6 +585,22 @@ packages:
   '@ctrl/tinycolor@4.2.0':
     resolution: {integrity: sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A==}
     engines: {node: '>=14'}
+
+  '@cybermp/rpc-core@0.2.0':
+    resolution: {integrity: sha512-34Dr2UY6dOkSA7+P88jvVdGz12YPNSsjpGsrwIuqQcOmNtvvjHNPdT8uljeNRGjYsxoR+3vFccrmoOW8m/rteA==}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.9.0'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+
+  '@cybermp/rpc-server@0.2.0':
+    resolution: {integrity: sha512-kEMt63u1SasgMo/vSac9YpaO/k4Yu7UQVsMb5AKWqFrH1tJljT3m+scJmZlPwLc+ccOfeOPRrnlEpTVV25ZukA==}
+    peerDependencies:
+      '@cybermp/server-types': ^3.2.5
+
+  '@cybermp/server-types@3.2.5':
+    resolution: {integrity: sha512-MFAGBejTZDey7P/lbzkLEARrb8oTJShjPMXyIogEcrE2vodSFlegD2MW1XwuGeLioqg74Zbg6b1+ds4QGk0ZUw==}
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -3883,6 +3908,17 @@ snapshots:
   '@csstools/css-tokenizer@4.0.0': {}
 
   '@ctrl/tinycolor@4.2.0': {}
+
+  '@cybermp/rpc-core@0.2.0': {}
+
+  '@cybermp/rpc-server@0.2.0(@cybermp/server-types@3.2.5)':
+    dependencies:
+      '@cybermp/rpc-core': 0.2.0
+      '@cybermp/server-types': 3.2.5
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@cybermp/server-types@3.2.5': {}
 
   '@emnapi/core@1.11.1':
     dependencies:

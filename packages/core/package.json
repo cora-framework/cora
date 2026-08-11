@@ -16,6 +16,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./cybermp": {
+      "types": "./dist/adapter/cybermp.d.ts",
+      "import": "./dist/adapter/cybermp.js"
+    },
+    "./experimental": {
+      "types": "./dist/experimental/index.d.ts",
+      "import": "./dist/experimental/index.js"
     }
   },
   "files": [
@@ -28,9 +36,12 @@
   "dependencies": {
     "@cora-framework/db": "workspace:*",
     "@cora-framework/lib": "workspace:*",
+    "@cybermp/rpc-server": "0.2.0",
+    "@cybermp/server-types": "3.2.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^22.10.0",
     "typescript": "^5.9.3"
   }
 }
