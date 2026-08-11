@@ -13,23 +13,33 @@ export const CHARACTER_NAME_MIN_LENGTH = 2
 export const CHARACTER_NAME_MAX_LENGTH = 32
 
 /**
- * Unicode letters, spaces and hyphens only. `\p{L}` matches a letter from
- * any script (not just ASCII), so names such as "Jose Garcia" or "Bjorn
- * Ostergaard" are valid, while digits, punctuation (other than `-`) and
- * emoji are not.
+ * Unicode letters, spaces and hyphens only, with at least one letter
+ * somewhere in the string (so an all-space or all-hyphen string never
+ * passes). `\p{L}` matches a letter from any script (not just ASCII), so
+ * names such as "Jose Garcia" or "Bjorn Ostergaard" are valid, while digits,
+ * punctuation (other than `-`) and emoji are not. Inner runs of repeated
+ * spaces (e.g. "Al  Ex") are intentionally allowed; only leading/trailing
+ * whitespace is rejected, and only by `isValidCharacterName` below, since a
+ * space alone still matches this pattern's character class.
  */
-export const CHARACTER_NAME_PATTERN = /^[\p{L} -]+$/u
+export const CHARACTER_NAME_PATTERN = /^(?=.*\p{L})[\p{L} -]+$/u
 
 /**
  * Business-rule name validation (length + character set), independent of
  * the zod boundary schema below. Used both by the server handler (to
  * produce the `"invalid_name"` typed error) and reusable client-side by the
  * character-select UI for the same 2-32 char rule.
+ *
+ * Validates the raw string as typed and does NOT trim it: a name with
+ * leading or trailing whitespace (e.g. `" a"` or `"Al  "`) is rejected
+ * outright rather than silently trimmed and stored. Callers that want
+ * trimming (e.g. a UI text input) must trim before calling this.
  */
 export function isValidCharacterName(name: string): boolean {
   return (
     name.length >= CHARACTER_NAME_MIN_LENGTH &&
     name.length <= CHARACTER_NAME_MAX_LENGTH &&
+    name === name.trim() &&
     CHARACTER_NAME_PATTERN.test(name)
   )
 }

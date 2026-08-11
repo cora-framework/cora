@@ -97,6 +97,30 @@ describe("characters module", () => {
     expect(result.ok).toBe(true)
   })
 
+  it.each([
+    ["  ", "spaces only, no letter"],
+    ["--", "hyphens only, no letter"],
+    ["- -", "hyphens and space, no letter"],
+    [" a", "leading whitespace"],
+    ["Al  ", "trailing whitespace"],
+  ])("rejects %j (%s)", async (name) => {
+    const db = createTestDatabase()
+    const { invokeRpc } = await bootKernel(db)
+
+    const result = await create(invokeRpc, PLAYER_ONE, name)
+
+    expect(result).toEqual({ ok: false, error: "invalid_name" })
+  })
+
+  it("allows inner double spaces as long as there is a letter and no leading/trailing whitespace", async () => {
+    const db = createTestDatabase()
+    const { invokeRpc } = await bootKernel(db)
+
+    const result = await create(invokeRpc, PLAYER_ONE, "Al  Ex")
+
+    expect(result.ok).toBe(true)
+  })
+
   it("rejects malformed input at the rpc boundary with invalid_input", async () => {
     const db = createTestDatabase()
     const { invokeRpc } = await bootKernel(db)

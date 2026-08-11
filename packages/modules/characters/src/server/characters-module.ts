@@ -1,4 +1,8 @@
-import type { CoraModule, CoraModuleContext } from "@cora-framework/core"
+import {
+  type CoraModule,
+  type CoraModuleContext,
+  defineModule,
+} from "@cora-framework/core"
 import type { CoraDb } from "@cora-framework/db"
 import type { Selectable } from "kysely"
 import { z } from "zod"
@@ -104,6 +108,14 @@ export function createCharactersHandlers(ctx: CoraModuleContext) {
       }
 
       const license = licenseOf(playerId)
+      // Count-then-insert is not atomic: two concurrent creates for the
+      // same player could both pass this check before either insert lands,
+      // letting a player exceed MAX_CHARACTERS_PER_PLAYER by one. Acceptable
+      // today because @cora-framework/db's test/dev target is sqlite, a
+      // single-writer database where the kernel's rpc handlers run one at a
+      // time. Revisit (e.g. a unique constraint + retry, or a transaction
+      // with a row lock) before this module is used against a multi-writer
+      // backend such as MySQL under real concurrency.
       const existing = await db
         .selectFrom("characters")
         .select("id")
@@ -215,7 +227,7 @@ export type CharactersModuleOptions = Record<string, never>
 export function createCharactersModule(
   _options: CharactersModuleOptions = {},
 ): CoraModule {
-  return {
+  return defineModule({
     id: "characters",
     migrations: charactersMigrations,
     register(ctx) {
@@ -225,5 +237,5 @@ export function createCharactersModule(
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_DELETE, handlers.delete)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_SELECT, handlers.select)
     },
-  }
+  })
 }
