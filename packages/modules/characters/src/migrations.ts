@@ -4,9 +4,10 @@ import type { Generated } from "kysely"
 /**
  * The `characters` table's row shape. `player_license` is documented tech
  * debt: CyberMP does not yet expose a stable player identity upstream, so
- * this column stores the numeric platform player id as text as a
- * placeholder. It is meant to be swapped for a real license/uuid once one
- * exists upstream (see the plan's self-review notes).
+ * player identity uses the numeric platform id as a placeholder until a
+ * stable identity concept exists upstream. This column stores that numeric
+ * platform player id as text and is meant to be swapped for a real
+ * license/uuid once one exists upstream.
  */
 export interface CharactersTable {
   characters: {

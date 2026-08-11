@@ -24,7 +24,7 @@ export function createMockCharacters(): CharacterSummary[] {
     },
     {
       id: 3,
-      name: "Judy Alvarez",
+      name: "Mara Voss",
       appearance: null,
       createdAt: "2026-01-03T20:45:00.000Z",
       lastPlayedAt: "2026-01-04T08:00:00.000Z",

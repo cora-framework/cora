@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from "vitest"
 import { createDamageKillerIdAnomalyLogger } from "./events.js"
 
 /**
- * Coverage for the damage `killerId` anomaly guard described in
- * `docs/superpowers/research/cybermp-killerid-sentinel.md`: upstream's
- * `DamageEventData.killerId` has no documented "no attacker" sentinel, so
- * CORA logs a warning (deduplicated per distinct anomalous value) instead of
- * guessing at one. This exercises the pure, `MpServer`-free factory directly
- * rather than going through `bindNativeEvents`, which needs a live-shaped
- * native `mp` global to construct.
+ * Coverage for the damage `killerId` anomaly guard: the no-attacker sentinel
+ * for damage is undocumented upstream; values are forwarded unchanged and
+ * anomalies logged. Upstream's `DamageEventData.killerId` has no documented
+ * "no attacker" sentinel, so CORA logs a warning (deduplicated per distinct
+ * anomalous value) instead of guessing at one. This exercises the pure,
+ * `MpServer`-free factory directly rather than going through
+ * `bindNativeEvents`, which needs a live-shaped native `mp` global to
+ * construct.
  */
 describe("createDamageKillerIdAnomalyLogger", () => {
   it("does not log for a normal killerId distinct from the target", () => {

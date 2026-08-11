@@ -136,9 +136,9 @@ describe("CharacterSelect", () => {
     )
     await user.click(screen.getByText("Create character"))
     const input = screen.getByLabelText("Name")
-    await user.type(input, "Judy Alvarez")
+    await user.type(input, "Mara Voss")
     await user.click(screen.getByText("Create"))
-    expect(onCreate).toHaveBeenCalledWith("Judy Alvarez")
+    expect(onCreate).toHaveBeenCalledWith("Mara Voss")
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 

@@ -10,9 +10,9 @@
  * phase - but is not produced by this module today.
  *
  * `playerDeath` while `"playing"` intentionally leaves the session
- * untouched: respawn handling is deferred to a later phase (see the plan's
- * self-review notes - it depends on upstream respawn events that are not
- * yet verified against a live server).
+ * untouched: respawn handling is deferred until upstream respawn events are
+ * verified in-game, so this only reflects a later phase once those events
+ * are confirmed against a live server.
  */
 export type SessionStatus = "connected" | "selecting" | "playing"
 
@@ -73,6 +73,24 @@ export class SessionManager {
    */
   isCurrentConnectEpoch(playerId: number, epoch: number): boolean {
     return this.connectEpochs.get(playerId) === epoch
+  }
+
+  /**
+   * Whether the deferred `ui.open` push from a `startSelecting` connect flow
+   * is still safe to deliver. Requires both that `epoch` is still the
+   * player's current connect (see `isCurrentConnectEpoch`) AND that the
+   * session's status is still `"selecting"` - the epoch check alone is not
+   * enough: a `select` rpc call can complete (moving the session to
+   * `"playing"`) before the connect flow's async character-list fetch
+   * resolves, without ever bumping the epoch (no second `playerConnected`
+   * fired). Without this status check, a late `ui.open` could re-open the
+   * select UI on a client that has already moved on to playing.
+   */
+  shouldPushUiOpen(playerId: number, epoch: number): boolean {
+    return (
+      this.isCurrentConnectEpoch(playerId, epoch) &&
+      this.sessions.get(playerId)?.status === "selecting"
+    )
   }
 
   /** Transitions the player's session to `"playing"` the given character. */

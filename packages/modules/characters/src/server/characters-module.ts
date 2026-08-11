@@ -231,12 +231,24 @@ export function createCharactersHandlers(
 
       sessions.setPlaying(playerId, parsed.data.characterId)
       const closePayload: CharactersUiClosePayload = { spawn: position }
-      await ctx.platform.callClient(
-        playerId,
-        CORA_CHARACTERS_UI_CLOSE,
-        closePayload,
-      )
+      try {
+        await ctx.platform.callClient(
+          playerId,
+          CORA_CHARACTERS_UI_CLOSE,
+          closePayload,
+        )
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        ctx.log(
+          "error",
+          `player ${playerId}: select flow (ui.close) failed: ${message}`,
+        )
+      }
 
+      // The select result stays ok regardless: the session is already
+      // "playing" at this point, so a failed ui.close push only leaves the
+      // client's select UI stale. Resyncing the client in that case is a
+      // future concern, not something this rpc handler should fail on.
       return { ok: true, characterId: parsed.data.characterId, position }
     },
   }
@@ -289,12 +301,20 @@ export function createCharactersModule(
       // an outdated character list after the fresher connect's `ui.open`.
       // We skip silently (not an error - just a superseded flow) rather
       // than logging.
+      //
+      // `shouldPushUiOpen` also requires the session still be "selecting":
+      // the epoch alone is not enough, because a `select` rpc call can
+      // complete (moving the session to "playing") before this flow's
+      // character-list fetch resolves, without ever bumping the epoch (no
+      // second `playerConnected` fired). Without that extra check, a late
+      // `ui.open` could re-open the select UI on a client that already
+      // finished selecting.
       ctx.hooks.onPlayerConnected((player) => {
         const epoch = sessions.startSelecting(player.id)
         void handlers
           .list({}, player.id)
           .then((result) => {
-            if (!sessions.isCurrentConnectEpoch(player.id, epoch)) {
+            if (!sessions.shouldPushUiOpen(player.id, epoch)) {
               return undefined
             }
             const characters = result.ok ? result.characters : []
@@ -349,9 +369,7 @@ export function createCharactersModule(
 
       // playerDeath while playing -> session state is left untouched (stays
       // "playing" with the same characterId). Respawn handling is deferred
-      // to a later phase: it depends on upstream respawn events that are
-      // not yet verified against a live server (see the plan's self-review
-      // notes).
+      // until upstream respawn events are verified in-game.
       ctx.hooks.onPlayerDeath(() => {})
     },
   })

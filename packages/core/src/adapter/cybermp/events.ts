@@ -55,8 +55,9 @@ function toAttackerId(killerId: number | undefined): number | null {
 
 /**
  * `DamageEventData.killerId` is a required `number` upstream with no
- * documented sentinel for "no attacker" (see
- * `docs/superpowers/research/cybermp-killerid-sentinel.md`) - unlike
+ * documented sentinel for "no attacker" - the no-attacker sentinel for
+ * damage is undocumented upstream; values are forwarded unchanged and
+ * anomalies logged. This is unlike
  * `PlayerDeathEventData.killerId`, which is optional and reliably maps to
  * `null`. Two values are the most likely "no human attacker" signals
  * (self-damage / environmental-or-NPC damage): `killerId === targetId`, and

@@ -352,6 +352,62 @@ describe("characters session/spawn state machine", () => {
       process.off("unhandledRejection", onUnhandledRejection)
     }
   })
+
+  it("still returns ok and logs an error when the select flow's ui.close callClient rejects", async () => {
+    const db = createTestDatabase()
+    const testPlatform = createTestPlatform()
+    const kernel = await createKernel({
+      platform: testPlatform.platform,
+      db,
+      modules: [createCharactersModule()],
+    })
+    expect(kernel.disabledModules).toEqual([])
+
+    const created = await create(
+      testPlatform.invokeRpc,
+      PLAYER_ONE.id,
+      "Alice Vance",
+    )
+    if (!created.ok) throw new Error("setup: create failed")
+
+    // Force callClient to reject only after setup, so the select rpc's
+    // ui.close push is what fails - not the earlier create call.
+    testPlatform.platform.callClient = async () => {
+      throw new Error("callClient boom")
+    }
+
+    const unhandled: unknown[] = []
+    const onUnhandledRejection = (reason: unknown) => unhandled.push(reason)
+    process.on("unhandledRejection", onUnhandledRejection)
+    try {
+      const result = (await testPlatform.invokeRpc(
+        CORA_CHARACTERS_SELECT,
+        { characterId: created.character.id },
+        PLAYER_ONE.id,
+      )) as SelectCharacterResult
+
+      // The session is already "playing" by this point, so a failed
+      // ui.close push must not fail the rpc call itself - only get logged.
+      expect(result).toEqual({
+        ok: true,
+        characterId: created.character.id,
+        position: { x: 0, y: 0, z: 0 },
+      })
+      expect(
+        testPlatform.logs.some(
+          (entry) =>
+            entry.level === "error" &&
+            entry.message.includes("select flow") &&
+            entry.message.includes(String(PLAYER_ONE.id)),
+        ),
+      ).toBe(true)
+
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(unhandled).toEqual([])
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection)
+    }
+  })
 })
 
 describe("SessionManager connect epoch", () => {
@@ -388,6 +444,33 @@ describe("SessionManager connect epoch", () => {
     expect(sessions.isCurrentConnectEpoch(PLAYER_TWO.id, playerTwoEpoch)).toBe(
       true,
     )
+  })
+
+  it("shouldPushUiOpen is true for a fresh selecting session with a current epoch", () => {
+    const sessions = new SessionManager()
+
+    const epoch = sessions.startSelecting(PLAYER_ONE.id)
+
+    expect(sessions.shouldPushUiOpen(PLAYER_ONE.id, epoch)).toBe(true)
+  })
+
+  it("shouldPushUiOpen is false once select completes, even with a still-current epoch", () => {
+    // Regression test: the epoch check alone is not enough to guard the
+    // deferred `ui.open` push. A `select` rpc call can complete (moving the
+    // session to "playing") entirely between `startSelecting` and the
+    // connect flow's async character-list fetch resolving, without any
+    // second `playerConnected` ever firing - so the epoch never changes.
+    // Without an additional status check, a late `ui.open` could re-open
+    // the select UI on a client that has already finished selecting.
+    const sessions = new SessionManager()
+
+    const epoch = sessions.startSelecting(PLAYER_ONE.id)
+    // Simulate: connect -> select completes before the connect flow's list
+    // fetch resolves.
+    sessions.setPlaying(PLAYER_ONE.id, 42)
+
+    expect(sessions.isCurrentConnectEpoch(PLAYER_ONE.id, epoch)).toBe(true)
+    expect(sessions.shouldPushUiOpen(PLAYER_ONE.id, epoch)).toBe(false)
   })
 })
 
