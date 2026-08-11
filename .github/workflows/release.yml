@@ -39,6 +39,9 @@ jobs:
           title: "chore: release packages"
           commit: "chore: release packages"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # RELEASE_TOKEN is a fine-grained PAT; the default GITHUB_TOKEN would
+          # not trigger the ci workflow on the version PR, deadlocking the
+          # required status check.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
