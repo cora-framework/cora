@@ -252,4 +252,94 @@ describe("createKernel", () => {
 
     await kernel.shutdown()
   })
+
+  it("passes ctx.config through to modules unchanged", async () => {
+    const { platform } = createTestPlatform()
+    const db = createTestDatabase()
+    let seenConfig: Record<string, unknown> | undefined
+
+    const moduleA = defineModule({
+      id: "module-a",
+      register(ctx) {
+        seenConfig = ctx.config
+      },
+    })
+
+    const kernel = await createKernel({
+      platform,
+      db,
+      modules: [moduleA],
+      config: { welcomeMessage: "hi", maxPlayers: 64 },
+    })
+
+    expect(seenConfig).toEqual({ welcomeMessage: "hi", maxPlayers: 64 })
+
+    await kernel.shutdown()
+  })
+
+  it("defaults ctx.config to an empty object when none is given", async () => {
+    const { platform } = createTestPlatform()
+    const db = createTestDatabase()
+    let seenConfig: Record<string, unknown> | undefined
+
+    const moduleA = defineModule({
+      id: "module-a",
+      register(ctx) {
+        seenConfig = ctx.config
+      },
+    })
+
+    const kernel = await createKernel({ platform, db, modules: [moduleA] })
+
+    expect(seenConfig).toEqual({})
+
+    await kernel.shutdown()
+  })
+
+  it("runs core migrations (permissions tables) before any module's migrations, and ctx.permissions works inside register()", async () => {
+    const { platform } = createTestPlatform()
+    const db = createTestDatabase()
+    const seenTablesDuringMigration: string[] = []
+    let grantedInsideRegister = false
+
+    const moduleA = defineModule({
+      id: "module-a",
+      migrations: [
+        {
+          module: "module-a",
+          sequence: 1,
+          name: "check-core-tables-exist",
+          async up(trx) {
+            const tables = await (
+              trx as unknown as typeof db
+            ).introspection.getTables()
+            seenTablesDuringMigration.push(...tables.map((table) => table.name))
+          },
+        },
+      ],
+      async register(ctx) {
+        const defineResult = await ctx.permissions.defineRole("admin", [
+          "cora.admin.*",
+        ])
+        if (!defineResult.ok) throw new Error(defineResult.error)
+
+        const grantResult = await ctx.permissions.grantRole(1, "admin")
+        if (!grantResult.ok) throw new Error(grantResult.error)
+
+        grantedInsideRegister = await ctx.permissions.hasPermission(
+          1,
+          "cora.admin.kick",
+        )
+      },
+    })
+
+    const kernel = await createKernel({ platform, db, modules: [moduleA] })
+
+    expect(kernel.disabledModules).toEqual([])
+    expect(seenTablesDuringMigration).toContain("cora_roles")
+    expect(seenTablesDuringMigration).toContain("cora_player_roles")
+    expect(grantedInsideRegister).toBe(true)
+
+    await kernel.shutdown()
+  })
 })

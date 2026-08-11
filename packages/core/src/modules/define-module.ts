@@ -1,6 +1,7 @@
 import type { CoraDb, CoraMigration } from "@cora-framework/db"
 import type { Locale } from "@cora-framework/lib"
 import type { CoraPlatform, PlatformEvents } from "../adapter/types.js"
+import type { Permissions } from "../permissions/permissions.js"
 
 /**
  * Unsubscribe function returned by every `KernelHooks` registration method.
@@ -84,6 +85,14 @@ export interface CoraModuleContext {
   hooks: KernelHooks
   log(level: "info" | "warn" | "error", message: string): void
   locale: Locale
+  /**
+   * The raw config record passed to `createKernel({ config })`, or `{}` if
+   * none was given. The kernel does not know or care about any module's
+   * config shape; a module parses its own slice with `loadConfig` from
+   * `@cora-framework/core/config` against its own zod schema.
+   */
+  config: Record<string, unknown>
+  permissions: Permissions
 }
 
 /**

@@ -9,6 +9,10 @@ import type {
   KernelHooks,
   ModulePlatform,
 } from "../modules/define-module.js"
+import {
+  corePermissionsMigrations,
+  createPermissions,
+} from "../permissions/permissions.js"
 
 export type {
   CoraModule,
@@ -169,6 +173,12 @@ export interface CreateKernelOptions {
   db: CoraDb
   locale?: Locale
   modules: CoraModule[]
+  /**
+   * Raw server config handed to every module as `ctx.config`. The kernel
+   * never parses or validates this - each module owns its own schema and
+   * calls `loadConfig` module-side. Defaults to `{}`.
+   */
+  config?: Record<string, unknown>
 }
 
 export interface Kernel {
@@ -195,6 +205,8 @@ export async function createKernel(
   const { platform, db, modules } = options
   const locale =
     options.locale ?? createLocale({ locales: { en: {} }, fallback: "en" })
+  const config = options.config ?? {}
+  const permissions = createPermissions(db)
 
   const seenIds = new Set<string>()
   for (const module of modules) {
@@ -213,7 +225,14 @@ export async function createKernel(
   // disabled module's tables/columns simply go unused rather than being
   // torn down, which keeps boot deterministic and avoids re-running
   // destructive migration logic on every restart.
-  const allMigrations = modules.flatMap((module) => module.migrations ?? [])
+  //
+  // Core migrations (currently just the permissions tables) always run
+  // first, ahead of every application module, since `ctx.permissions` must
+  // be usable from any module's `register()`.
+  const allMigrations = [
+    ...corePermissionsMigrations,
+    ...modules.flatMap((module) => module.migrations ?? []),
+  ]
   const migrationResult = await runMigrations(db, allMigrations)
   if (!migrationResult.ok) {
     throw new Error(
@@ -288,6 +307,8 @@ export async function createKernel(
         platform.log(level, `[${module.id}] ${message}`)
       },
       locale,
+      config,
+      permissions,
     }
 
     try {

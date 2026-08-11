@@ -7,6 +7,7 @@ export type {
   CoraPlayer,
   PlatformEvents,
 } from "./adapter/types.js"
+export { defineConfig, loadConfig } from "./config/config.js"
 export {
   type CreateKernelOptions,
   createKernel,
@@ -21,3 +22,8 @@ export {
   type ModulePlatform,
   type ModulePlatformEvents,
 } from "./modules/define-module.js"
+export {
+  corePermissionsMigrations,
+  createPermissions,
+  type Permissions,
+} from "./permissions/permissions.js"
