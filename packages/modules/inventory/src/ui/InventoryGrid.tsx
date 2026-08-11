@@ -60,7 +60,7 @@ function slotAriaLabel(slot: SlotView): string {
  *   scope per the plan).
  *
  * Drag and drop can layer on top of this later without changing the props
- * contract - see the phase-2c plan's self-review notes.
+ * contract: the click-select model is the CEF-friendly baseline.
  */
 export function InventoryGrid({
   slots,
