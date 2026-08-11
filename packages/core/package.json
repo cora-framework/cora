@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Kernel and platform adapter for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",
