@@ -79,6 +79,11 @@ async function fetchAllSlots(db: InventoryDb, characterId: number) {
  * any write happens. If the quantity does not fit in the available slots
  * (`inventory_full`) or would push carried weight over `config.maxWeight`
  * (`weight_exceeded`), nothing in the db changes.
+ *
+ * Not atomic on its own: this issues multiple sequential statements (reads
+ * then a series of updates/inserts) against `db`. The caller MUST invoke
+ * this inside `withTransaction` (from `@cora-framework/db`) so the whole
+ * operation commits or rolls back as one unit - see `src/server/inventory-module.ts`.
  */
 export async function addItem(
   db: InventoryDb,
@@ -155,6 +160,16 @@ export async function addItem(
  * Removes `quantity` units from `slot`. Deletes the row entirely when the
  * remaining quantity would reach zero (i.e. `quantity` equals the stack's
  * current quantity).
+ *
+ * Equipped-vanishes behavior: this applies even when the slot is currently
+ * equipped - removing an equipped slot's full quantity deletes the row
+ * (`equipped` flag and all), it does not leave behind an empty-but-equipped
+ * row. Callers that care whether the removed slot was equipped must read it
+ * before calling `removeQuantity`; nothing in the return value reports it.
+ *
+ * Not atomic on its own: the caller MUST invoke this inside
+ * `withTransaction` (from `@cora-framework/db`) - see
+ * `src/server/inventory-module.ts`.
  */
 export async function removeQuantity(
   db: InventoryDb,
@@ -208,6 +223,10 @@ export async function removeQuantity(
  *
  * A move within a single character's inventory never changes total carried
  * weight, so no weight check is performed here.
+ *
+ * Not atomic on its own: the caller MUST invoke this inside
+ * `withTransaction` (from `@cora-framework/db`) - see
+ * `src/server/inventory-module.ts`.
  */
 export async function moveSlot(
   db: InventoryDb,
@@ -269,6 +288,15 @@ export async function moveSlot(
  *   (`insufficient_quantity` otherwise).
  *
  * Weight-neutral like `moveSlot`: no weight check.
+ *
+ * The new stack in `to` is always created unequipped, regardless of whether
+ * `from` was equipped - equipping is per-slot state, not carried across a
+ * split, so splitting an equipped stack leaves the original slot equipped
+ * (with its reduced quantity) and the new slot unequipped.
+ *
+ * Not atomic on its own: the caller MUST invoke this inside
+ * `withTransaction` (from `@cora-framework/db`) - see
+ * `src/server/inventory-module.ts`.
  */
 export async function splitStack(
   db: InventoryDb,
@@ -331,7 +359,16 @@ export async function splitStack(
  * (a character can have one equipped weapon and one equipped gear item at
  * once). The previously equipped slot, if any, is reported back so the rpc
  * handler (Task 3) can include it in its client push without a second
- * query.
+ * query. Normal operation should never produce more than one other equipped
+ * row of the same category, but the unequip step defensively clears every
+ * matching row it finds rather than stopping at the first one, so a
+ * corrupted or manually-edited inventory self-heals back to "at most one
+ * equipped item per category" on the next equip call instead of silently
+ * leaving a second row equipped.
+ *
+ * Not atomic on its own: the caller MUST invoke this inside
+ * `withTransaction` (from `@cora-framework/db`) - see
+ * `src/server/inventory-module.ts`.
  */
 export async function equip(
   db: InventoryDb,
@@ -351,22 +388,24 @@ export async function equip(
   if (row.equipped) return err("already_equipped")
 
   const rows = await fetchAllSlots(db, characterId)
-  let unequippedSlot: number | null = null
+  const toUnequip: number[] = []
   for (const other of rows) {
     if (!other.equipped || other.slot === slot) continue
     const otherDef = config.catalog.byId.get(other.item_id)
     if (otherDef && otherDef.category === def.category) {
-      unequippedSlot = other.slot
-      break
+      toUnequip.push(other.slot)
     }
   }
+  // Deliberately no `break` above: every matching row is collected, and
+  // every one of them is cleared below, not just the first found.
+  const unequippedSlot = toUnequip.length > 0 ? (toUnequip[0] ?? null) : null
 
-  if (unequippedSlot !== null) {
+  for (const otherSlot of toUnequip) {
     await db
       .updateTable("inventory_slots")
       .set({ equipped: 0 })
       .where("character_id", "=", characterId)
-      .where("slot", "=", unequippedSlot)
+      .where("slot", "=", otherSlot)
       .execute()
   }
 

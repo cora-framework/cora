@@ -405,6 +405,18 @@ describe("removeQuantity", () => {
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toBe("invalid_input")
   })
+
+  it("deletes the row (equipped flag and all) when removing the full quantity of an equipped slot", async () => {
+    const db = await setupDb()
+    await seedSlot(db, 0, "medium-pistol", 1, true)
+
+    const result = await withTransaction(db, (trx) =>
+      removeQuantity(trx, config(), CHARACTER_ID, 0, 1),
+    )
+
+    expect(result).toEqual({ ok: true })
+    expect(await allRows(db)).toEqual([])
+  })
 })
 
 describe("moveSlot", () => {
@@ -625,6 +637,25 @@ describe("splitStack", () => {
 
     expect(result).toEqual({ ok: false, error: "insufficient_quantity" })
   })
+
+  it("leaves the new stack unequipped when splitting from an equipped source", async () => {
+    const db = await setupDb()
+    // stim-pack is a consumable, never equippable via `equip`, but nothing
+    // stops a seeded/manually-edited row from carrying `equipped: 1` - the
+    // split logic must not propagate it regardless of the source item's
+    // category.
+    await seedSlot(db, 0, "stim-pack", 5, true)
+
+    const result = await withTransaction(db, (trx) =>
+      splitStack(trx, config(), CHARACTER_ID, 0, 1, 2),
+    )
+
+    expect(result).toEqual({ ok: true })
+    const rows = await allRows(db)
+    const bySlot = new Map(rows.map((r) => [r.slot, r]))
+    expect(bySlot.get(0)?.equipped).toBe(1)
+    expect(bySlot.get(1)?.equipped).toBe(0)
+  })
 })
 
 describe("equip", () => {
@@ -716,5 +747,27 @@ describe("equip", () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toBe("invalid_input")
+  })
+
+  it("defensively clears every equipped row of the same category, not just the first", async () => {
+    const db = await setupDb()
+    // Two equipped weapon rows at once should never happen through normal
+    // `equip` calls, but seed it directly to exercise the defensive
+    // "clear all matches" loop (no `break`) rather than only the first.
+    await seedSlot(db, 0, "medium-pistol", 1, true)
+    await seedSlot(db, 1, "heavy-pistol", 1, true)
+    await seedSlot(db, 2, "medium-pistol", 1)
+
+    const result = await withTransaction(db, (trx) =>
+      equip(trx, config(), CHARACTER_ID, 2),
+    )
+
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.equipped).toBe(2)
+    const rows = await allRows(db)
+    const bySlot = new Map(rows.map((r) => [r.slot, r]))
+    expect(bySlot.get(0)?.equipped).toBe(0)
+    expect(bySlot.get(1)?.equipped).toBe(0)
+    expect(bySlot.get(2)?.equipped).toBe(1)
   })
 })
