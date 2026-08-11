@@ -180,4 +180,76 @@ describe("createKernel", () => {
     expect(calls).toEqual([])
     expect(platform.events.listenerCount("playerConnected")).toBe(0)
   })
+
+  it("rolls back a subscription made directly via ctx.platform.events.on when register() throws", async () => {
+    const { platform, emit } = createTestPlatform()
+    const db = createTestDatabase()
+    const calls: CoraPlayer[] = []
+
+    const badModule = defineModule({
+      id: "bad-module",
+      register(ctx) {
+        ctx.platform.events.on("playerConnected", (player) => {
+          calls.push(player)
+        })
+        throw new Error("boom during register")
+      },
+    })
+
+    const kernel = await createKernel({ platform, db, modules: [badModule] })
+
+    expect(kernel.disabledModules).toEqual(["bad-module"])
+
+    emit("playerConnected", { id: 1, name: "Alice" })
+
+    expect(calls).toEqual([])
+  })
+
+  it("removes a subscription made via ctx.platform.events.once on shutdown", async () => {
+    const { platform, emit } = createTestPlatform()
+    const db = createTestDatabase()
+    const calls: CoraPlayer[] = []
+
+    const moduleA = defineModule({
+      id: "module-a",
+      register(ctx) {
+        ctx.platform.events.once("playerConnected", (player) => {
+          calls.push(player)
+        })
+      },
+    })
+
+    const kernel = await createKernel({ platform, db, modules: [moduleA] })
+    await kernel.shutdown()
+
+    emit("playerConnected", { id: 1, name: "Alice" })
+
+    expect(calls).toEqual([])
+  })
+
+  it("prefixes ctx.platform.log identically to ctx.log", async () => {
+    const { platform, logs } = createTestPlatform()
+    const db = createTestDatabase()
+
+    const moduleA = defineModule({
+      id: "module-a",
+      register(ctx) {
+        ctx.log("info", "via ctx.log")
+        ctx.platform.log("info", "via ctx.platform.log")
+      },
+    })
+
+    const kernel = await createKernel({ platform, db, modules: [moduleA] })
+
+    expect(logs).toContainEqual({
+      level: "info",
+      message: "[module-a] via ctx.log",
+    })
+    expect(logs).toContainEqual({
+      level: "info",
+      message: "[module-a] via ctx.platform.log",
+    })
+
+    await kernel.shutdown()
+  })
 })

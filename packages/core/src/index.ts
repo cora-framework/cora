@@ -18,4 +18,6 @@ export {
   defineModule,
   type HookUnsubscribe,
   type KernelHooks,
+  type ModulePlatform,
+  type ModulePlatformEvents,
 } from "./modules/define-module.js"

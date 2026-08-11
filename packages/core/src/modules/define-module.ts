@@ -33,16 +33,54 @@ export interface KernelHooks {
 }
 
 /**
+ * The event subscription surface exposed on `ModulePlatform.events`. Shaped
+ * like the subscribe/unsubscribe half of `TypedEmitter<PlatformEvents>`,
+ * but every `on`/`once` call is tracked by the kernel against the
+ * registering module, so it rolls back if the module's `register()` throws
+ * and is torn down on `shutdown()` exactly like `ctx.hooks` registrations.
+ *
+ * `emit` is deliberately not exposed here: modules must not be able to
+ * spoof platform events for other modules or the kernel itself.
+ */
+export interface ModulePlatformEvents {
+  on<K extends keyof PlatformEvents>(
+    event: K,
+    handler: (...args: PlatformEvents[K]) => void,
+  ): HookUnsubscribe
+  once<K extends keyof PlatformEvents>(
+    event: K,
+    handler: (...args: PlatformEvents[K]) => void,
+  ): HookUnsubscribe
+  off<K extends keyof PlatformEvents>(
+    event: K,
+    handler: (...args: PlatformEvents[K]) => void,
+  ): void
+}
+
+/**
+ * The per-module view of `CoraPlatform` handed to modules as
+ * `CoraModuleContext.platform`. Identical to `CoraPlatform` except
+ * `events`, which is narrowed to the tracked `ModulePlatformEvents`
+ * surface instead of the raw `TypedEmitter`. This is a module-facing view
+ * only - it does not change the `CoraPlatform` adapter contract itself.
+ */
+export interface ModulePlatform extends Omit<CoraPlatform, "events"> {
+  events: ModulePlatformEvents
+}
+
+/**
  * Everything a module's `register()` function receives from the kernel at
- * boot. `platform` is a per-module wrapped `CoraPlatform`: it behaves like
+ * boot. `platform` is a per-module wrapped `ModulePlatform`: it behaves like
  * the real platform, but `registerRpcHandler` calls are routed through the
- * kernel so a failing module's registrations can be rolled back. `log` is
- * pre-prefixed with the module's id; `hooks` is pre-scoped so unsubscribing
- * only ever affects this module's own registrations.
+ * kernel so a failing module's registrations can be rolled back, and
+ * `events` is the tracked `ModulePlatformEvents` surface for the same
+ * reason. `log` is pre-prefixed with the module's id, identically to
+ * `platform.log`; `hooks` is pre-scoped so unsubscribing only ever affects
+ * this module's own registrations.
  */
 export interface CoraModuleContext {
   db: CoraDb
-  platform: CoraPlatform
+  platform: ModulePlatform
   hooks: KernelHooks
   log(level: "info" | "warn" | "error", message: string): void
   locale: Locale

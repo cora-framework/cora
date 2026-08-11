@@ -7,6 +7,7 @@ import type {
   CoraModuleContext,
   HookUnsubscribe,
   KernelHooks,
+  ModulePlatform,
 } from "../modules/define-module.js"
 
 export type {
@@ -14,6 +15,8 @@ export type {
   CoraModuleContext,
   HookUnsubscribe,
   KernelHooks,
+  ModulePlatform,
+  ModulePlatformEvents,
 } from "../modules/define-module.js"
 
 type EventName = keyof PlatformEvents
@@ -92,16 +95,26 @@ function createHooksForModule(
 }
 
 /**
- * Builds the per-module `CoraPlatform` facade. It delegates everything to
- * the real platform except `registerRpcHandler`: registrations are recorded
- * in the shared `rpcTable` (keyed by rpc name, so duplicate registration
- * across modules still throws exactly like the real platform), and the
- * kernel installs at most one real dispatcher per rpc name on the
- * underlying platform. That dispatcher looks the entry up in `rpcTable` on
- * every call, so removing the entry (module rollback, or shutdown) makes
- * the name stop dispatching without ever needing an `unregister` capability
- * on `CoraPlatform` itself. Names this module successfully registers are
- * also pushed onto `moduleRpcNames` for rollback.
+ * Builds the per-module `ModulePlatform` facade. It delegates everything to
+ * the real platform except:
+ *
+ * - `registerRpcHandler`: registrations are recorded in the shared
+ *   `rpcTable` (keyed by rpc name, so duplicate registration across modules
+ *   still throws exactly like the real platform), and the kernel installs
+ *   at most one real dispatcher per rpc name on the underlying platform.
+ *   That dispatcher looks the entry up in `rpcTable` on every call, so
+ *   removing the entry (module rollback, or shutdown) makes the name stop
+ *   dispatching without ever needing an `unregister` capability on
+ *   `CoraPlatform` itself. Names this module successfully registers are
+ *   also pushed onto `moduleRpcNames` for rollback.
+ * - `events`: `on`/`once` subscribe on the real platform's emitter but push
+ *   the returned unsubscribe into `moduleUnsubscribes`, the same rollback
+ *   list `ctx.hooks` registrations use. That is what lets a module's direct
+ *   `ctx.platform.events.on(...)` subscriptions be rolled back on a failed
+ *   register() and torn down on kernel shutdown, not just its `ctx.hooks`
+ *   registrations. `off` delegates straight through (idempotent either
+ *   way); `emit` is intentionally not exposed - see `ModulePlatformEvents`.
+ * - `log`: prefixed with `[moduleId]`, identically to `ctx.log`.
  */
 function wrapPlatformForModule(
   moduleId: string,
@@ -109,12 +122,27 @@ function wrapPlatformForModule(
   rpcTable: Map<string, RpcEntry>,
   dispatchedRpcNames: Set<string>,
   moduleRpcNames: string[],
-): CoraPlatform {
+  moduleUnsubscribes: HookUnsubscribe[],
+): ModulePlatform {
   return {
-    events: platform.events,
+    events: {
+      on(event, handler) {
+        const unsubscribe = platform.events.on(event, handler)
+        moduleUnsubscribes.push(unsubscribe)
+        return unsubscribe
+      },
+      once(event, handler) {
+        const unsubscribe = platform.events.once(event, handler)
+        moduleUnsubscribes.push(unsubscribe)
+        return unsubscribe
+      },
+      off(event, handler) {
+        platform.events.off(event, handler)
+      },
+    },
     callClient: (playerId, name, payload) =>
       platform.callClient(playerId, name, payload),
-    log: (level, message) => platform.log(level, message),
+    log: (level, message) => platform.log(level, `[${moduleId}] ${message}`),
     registerRpcHandler(name, handler) {
       if (rpcTable.has(name)) {
         throw new Error(`rpc handler "${name}" is already registered`)
@@ -157,8 +185,9 @@ export interface Kernel {
  * out of this function - there is no partial kernel to hand back. A module
  * whose `register()` throws (sync or async) is instead non-fatal: it is
  * logged via `platform.log("error", ...)`, listed in `disabledModules`, and
- * every hook subscription and rpc registration it made before throwing is
- * rolled back. Boot then continues with the remaining modules.
+ * every hook subscription, direct `ctx.platform.events` subscription, and
+ * rpc registration it made before throwing is rolled back. Boot then
+ * continues with the remaining modules.
  */
 export async function createKernel(
   options: CreateKernelOptions,
@@ -177,6 +206,13 @@ export async function createKernel(
     seenIds.add(module.id)
   }
 
+  // All modules' migrations run together, before any module's register() is
+  // called, regardless of which module (if any) later fails to register.
+  // Migrations are forward-only (see `@cora-framework/db`'s `runMigrations`)
+  // and intentionally NOT rolled back if a later module is disabled: a
+  // disabled module's tables/columns simply go unused rather than being
+  // torn down, which keeps boot deterministic and avoids re-running
+  // destructive migration logic on every restart.
   const allMigrations = modules.flatMap((module) => module.migrations ?? [])
   const migrationResult = await runMigrations(db, allMigrations)
   if (!migrationResult.ok) {
@@ -220,6 +256,11 @@ export async function createKernel(
   ]
 
   const disabledModules: string[] = []
+  // Accumulates every hook/platform-events unsubscribe from modules that
+  // registered successfully, so shutdown() can tear all of them down. A
+  // failed module's own unsubscribes are handled inline in the catch block
+  // below instead and never added here.
+  const allModuleUnsubscribes: HookUnsubscribe[] = []
 
   for (const module of modules) {
     const moduleHookUnsubscribes: HookUnsubscribe[] = []
@@ -236,6 +277,7 @@ export async function createKernel(
       rpcTable,
       dispatchedRpcNames,
       moduleRpcNames,
+      moduleHookUnsubscribes,
     )
 
     const ctx: CoraModuleContext = {
@@ -250,6 +292,7 @@ export async function createKernel(
 
     try {
       await module.register(ctx)
+      allModuleUnsubscribes.push(...moduleHookUnsubscribes)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       platform.log(
@@ -267,6 +310,7 @@ export async function createKernel(
     disabledModules,
     async shutdown() {
       for (const unsubscribe of kernelUnsubscribes) unsubscribe()
+      for (const unsubscribe of allModuleUnsubscribes) unsubscribe()
       for (const eventName of EVENT_NAMES) hookRegistry[eventName] = []
       rpcTable.clear()
     },
