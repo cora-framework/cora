@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "description": "Shared utilities for the CORA framework - standalone-usable.",
   "license": "MIT",
+  "homepage": "https://github.com/cora-framework/cora",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cora-framework/cora.git",
+    "directory": "packages/lib"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

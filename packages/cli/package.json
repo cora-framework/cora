@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "description": "Command-line tooling for the CORA framework.",
   "license": "MIT",
+  "homepage": "https://github.com/cora-framework/cora",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cora-framework/cora.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
