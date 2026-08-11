@@ -329,6 +329,15 @@ export async function createKernel(
 
   return {
     disabledModules,
+    /**
+     * Unsubscribes every kernel and module hook/event listener and clears
+     * the rpc table. This platform instance is not reusable afterward: a
+     * shut-down platform instance cannot be re-booted with a new kernel via
+     * a second `createKernel` call against the same `platform` - restart the
+     * process instead. Platform-level rpc unregistration (so the underlying
+     * `CoraPlatform` itself could be handed to a fresh kernel) is planned
+     * but not implemented yet.
+     */
     async shutdown() {
       for (const unsubscribe of kernelUnsubscribes) unsubscribe()
       for (const unsubscribe of allModuleUnsubscribes) unsubscribe()

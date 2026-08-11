@@ -3,14 +3,14 @@ import type { Vec3 } from "@cora-framework/lib"
 /**
  * Unverified CyberMP native platform surfaces.
  *
- * Per the UI research dossier (`docs/superpowers/research/cybermp-native-vs-cef-ui.md`)
- * and the lifecycle dossier (`docs/superpowers/research/cybermp-lifecycle-events.md`),
- * these surfaces (native HUD toggling, nameplates, minimap markers, native
- * item grants, the character appearance editor) are all "native-reusable"
+ * Based on observed behavior of the CyberMP reference gamemode, these
+ * surfaces (native HUD toggling, nameplates, minimap markers, native item
+ * grants, the character appearance editor) are all "native-reusable"
  * candidates - real upstream mechanisms exist for each - but none of them
  * has ever been exercised inside a live CyberMP process by CORA. Unlike the
  * five stable `PlatformEvents`, there is no real-world proof any of these
- * behave the way their declared upstream signatures suggest.
+ * behave the way their declared upstream signatures suggest; each is
+ * unverified until in-game testing is possible.
  *
  * Every export below is fenced behind the `CORA_EXPERIMENTAL` environment
  * variable:
@@ -23,9 +23,10 @@ import type { Vec3 } from "@cora-framework/lib"
  *   `NotImplementedError`, a distinct signal meaning "verification pending"
  *   rather than "unsafe to call".
  *
- * The signatures themselves are the real intended shape of each bridge (per
- * the UI dossier's native-reusable list), so that 2b/2c can implement
- * against a stable contract - only the body is a placeholder.
+ * The signatures themselves are the real intended shape of each bridge
+ * (based on observed behavior of the CyberMP reference gamemode's
+ * native-reusable surfaces), so that 2b/2c can implement against a stable
+ * contract - only the body is a placeholder.
  */
 
 /**
@@ -78,8 +79,9 @@ function fence(feature: string): never {
  * Sets the on-screen nameplate text for `playerId`.
  *
  * Intended bridge: `inkTextWidget` inside `inkHUDLayer`, per-frame
- * projected to the target player's screen position (per the UI dossier's
- * nameplate mechanism). Unverified: CORA has never driven this widget.
+ * projected to the target player's screen position, based on observed
+ * behavior of the CyberMP reference gamemode's nameplate mechanism.
+ * Unverified: CORA has never driven this widget.
  */
 export function setNameplateText(playerId: number, text: string): void {
   fence(`setNameplateText(${playerId}, ${JSON.stringify(text)})`)
@@ -89,8 +91,9 @@ export function setNameplateText(playerId: number, text: string): void {
  * Creates a minimap marker ("map pin") at `position`, addressable later by
  * `id`.
  *
- * Intended bridge: the native mappin system referenced by the UI dossier.
- * Unverified: CORA has never created or removed a native mappin.
+ * Intended bridge: the native mappin system, based on observed behavior of
+ * the CyberMP reference gamemode. Unverified: CORA has never created or
+ * removed a native mappin.
  */
 export function createMapPin(id: string, position: Vec3): void {
   fence(`createMapPin(${id}, ${JSON.stringify(position)})`)
@@ -107,8 +110,8 @@ export function removeMapPin(id: string): void {
  * Toggles the visibility of a native HUD element (health bar, minimap,
  * quest tracker, and so on).
  *
- * Intended bridge: the config-var/`GHudService` pattern the UI dossier
- * documents for native HUD toggling. Unverified.
+ * Intended bridge: the config-var/`GHudService` pattern observed for native
+ * HUD toggling in the CyberMP reference gamemode. Unverified.
  */
 export function setHudElementVisible(element: string, visible: boolean): void {
   fence(`setHudElementVisible(${element}, ${visible})`)
@@ -129,8 +132,9 @@ export function grantNativeItem(playerId: number, tweakDbId: string): void {
 /**
  * Opens the native character appearance editor for `playerId`.
  *
- * Intended bridge: `MenuScenario_CharacterCustomizationMirror`, per the UI
- * dossier's appearance-editing entry. Unverified.
+ * Intended bridge: `MenuScenario_CharacterCustomizationMirror`, based on
+ * observed behavior of the CyberMP reference gamemode's appearance-editing
+ * flow. Unverified.
  */
 export function openAppearanceEditor(playerId: number): void {
   fence(`openAppearanceEditor(${playerId})`)

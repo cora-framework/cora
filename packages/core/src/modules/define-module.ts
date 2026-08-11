@@ -89,7 +89,7 @@ export interface CoraModuleContext {
    * The raw config record passed to `createKernel({ config })`, or `{}` if
    * none was given. The kernel does not know or care about any module's
    * config shape; a module parses its own slice with `loadConfig` from
-   * `@cora-framework/core/config` against its own zod schema.
+   * `@cora-framework/core` against its own zod schema.
    */
   config: Record<string, unknown>
   permissions: Permissions

@@ -5,9 +5,9 @@ import type { CoraPlayer, PlatformEvents } from "../types.js"
 /**
  * Maps the five stable `PlatformEvents` onto the real CyberMP native event
  * bus. Names and payload shapes are pinned to `@cybermp/server-types@3.2.5`
- * and cross-checked against `docs/superpowers/research/cybermp-lifecycle-events.md`
- * (which additionally validated that all five are actually emitted by a
- * real gamemode, not merely declared in the types package):
+ * and based on observed behavior of the CyberMP reference gamemode (which
+ * additionally validated that all five are actually emitted by a real
+ * gamemode, not merely declared in the types package):
  *
  * - `playerConnected(playerId, tempId)` -> `PlatformEvents.playerConnected`.
  *   `tempId` has no CORA equivalent and is dropped.

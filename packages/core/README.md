@@ -47,6 +47,8 @@ await kernel.shutdown()
 
 A module whose `register()` throws is disabled and logged instead of crashing the boot: `kernel.disabledModules` lists its id, and everything it registered before throwing (hooks, RPC handlers, platform event subscriptions) is rolled back automatically.
 
+`kernel.shutdown()` unsubscribes every listener and clears the rpc table, but the underlying platform instance is not reusable afterward: a shut-down platform instance cannot be re-booted with a new kernel, so restart the process instead of calling `createKernel` again against the same `platform`. Platform-level rpc unregistration is planned.
+
 ## Lifecycle hooks
 
 `ctx.hooks` (and the equivalent `ctx.platform.events`) expose exactly five stable events - the only ones validated by real-world usage in the CyberMP ecosystem today. Everything else (spawn, vehicle, streaming) is intentionally left out of this stable set until it earns the same confidence; see RFC 0001 for the full reasoning.
@@ -136,15 +138,17 @@ import { createCyberMpPlatform } from "@cora-framework/core/cybermp"
 import { createKernel } from "@cora-framework/core"
 import { createDatabase, type CoraDbConfig } from "@cora-framework/db"
 
-function boot(dbConfig: CoraDbConfig) {
-  const platform = createCyberMpPlatform()
+async function boot(dbConfig: CoraDbConfig) {
+  const platform = await createCyberMpPlatform()
   const db = createDatabase(dbConfig)
 
   return createKernel({ platform, db, modules: [] })
 }
 ```
 
-`createCyberMpPlatform` maps the five stable `PlatformEvents` onto the native `mp.events` bus (`playerConnected`, `playerDisconnected`, `playerDeath`, `damage`, `resourceStop`), bridges `registerRpcHandler`/`callClient` onto `@cybermp/rpc-server`'s `RpcServer.register`/`callClient`, and logs via `console` with a `[level]` prefix. It is compile-only: it typechecks against the real upstream packages, but constructing it requires a live CyberMP process (the native `mp` global injected into `globalThis`), so there is no lane-1 test for it beyond the import-boundary check - only `src/adapter/types.ts` and `createTestPlatform` are exercised headlessly. Only this file and its `src/adapter/cybermp/` submodules may import `@cybermp/*`; `src/adapter/import-boundary.test.ts` enforces that at the source-tree level.
+`createCyberMpPlatform` is `async`: `@cybermp/rpc-server` throws at *import* time (not construction time) when the native `mp` global is absent, so the adapter loads it with a dynamic `import()` inside the factory instead of a static top-level import, which makes the whole factory return a `Promise<CoraPlatform>`. Calling it outside a live CyberMP process rejects with a friendly error from CORA's own code (`getNativeMp()`'s presence check runs first, before the dynamic import is ever attempted) - not the upstream package's own, less specific failure.
+
+`createCyberMpPlatform` maps the five stable `PlatformEvents` onto the native `mp.events` bus (`playerConnected`, `playerDisconnected`, `playerDeath`, `damage`, `resourceStop`), bridges `registerRpcHandler`/`callClient` onto `@cybermp/rpc-server`'s `RpcServer.register`/`callClient`, and logs via `console` with a `[level]` prefix. Its module (and its `./cybermp/*` submodules) now safely *import*, even outside a live CyberMP process - only *constructing* the platform requires one, and does so with the friendly error described above. Only this file and its `src/adapter/cybermp/` submodules may import `@cybermp/*`; `src/adapter/import-boundary.test.ts` enforces that at the source-tree level.
 
 ## Experimental platform surfaces
 

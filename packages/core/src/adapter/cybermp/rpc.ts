@@ -1,13 +1,13 @@
-import { RpcServer, type RpcServerContext } from "@cybermp/rpc-server"
+import type { RpcServerContext } from "@cybermp/rpc-server"
 
 /**
  * The rpc bridge between `CoraPlatform` and `@cybermp/rpc-server@0.2.0`.
  *
- * Per `docs/superpowers/research/cybermp-rpc-types.md`, `@cybermp/rpc-router`'s
- * contract/procedure builders are a *higher* layer on top of the same
- * `RpcServer` this module uses directly - and `RpcServer` (via its base
- * `RpcBase`) already exposes exactly the "register by name" primitive
- * `CoraPlatform.registerRpcHandler` needs:
+ * Based on observed behavior of the CyberMP reference gamemode,
+ * `@cybermp/rpc-router`'s contract/procedure builders are a *higher* layer
+ * on top of the same `RpcServer` this module uses directly - and
+ * `RpcServer` (via its base `RpcBase`) already exposes exactly the
+ * "register by name" primitive `CoraPlatform.registerRpcHandler` needs:
  *
  * - `RpcServer.register(method, ...handlers)` (inherited from `RpcBase`,
  *   itself delegating to an internal `RpcProvider`) adds a named REGISTER
@@ -24,11 +24,20 @@ import { RpcServer, type RpcServerContext } from "@cybermp/rpc-server"
  * `ctx.player.id` - down to `CoraPlatform`'s plain `(input, playerId)`.
  *
  * Duplicate-name protection: `RpcProvider.register` does not itself reject
- * a second registration under the same name (the dossier's own gotcha
- * about `RpcRouter.apply()` being destructive is about the *router* layer,
- * which this module does not use). CORA enforces "duplicate name throws"
- * itself, matching `createTestPlatform`'s behavior, by tracking registered
- * names before ever calling into `RpcServer`.
+ * a second registration under the same name (this is unverified until
+ * in-game testing is possible for the router layer's own `RpcRouter.apply()`
+ * gotchas, which this module does not use in the first place). CORA
+ * enforces "duplicate name throws" itself, matching `createTestPlatform`'s
+ * behavior, by tracking registered names before ever calling into
+ * `RpcServer`.
+ *
+ * `RpcServer` is imported dynamically inside `createCyberMpRpc` rather than
+ * at module top level: `@cybermp/rpc-server` throws at import time (not
+ * construction time) when the native `mp` global is absent, so a top-level
+ * import would make this module fail to load outside a live CyberMP
+ * process, before `getNativeMp()`'s own friendly error ever gets a chance
+ * to run. Only the type import above stays static - types are erased and
+ * never trigger the runtime import.
  */
 export interface CyberMpRpc {
   registerRpcHandler(
@@ -39,12 +48,15 @@ export interface CyberMpRpc {
 }
 
 /**
- * Constructs the rpc bridge. Takes no `MpServer` reference - `RpcServer`'s
- * own databus talks to the native `mp` global internally (mirroring the
- * same "Local Approach" pattern `getNativeMp` follows for the rest of the
- * adapter), so nothing here needs to thread it through.
+ * Constructs the rpc bridge. Async because it dynamically imports
+ * `@cybermp/rpc-server` (see the module docstring above); callers must
+ * await it before `RpcServer` is available. Takes no `MpServer` reference -
+ * `RpcServer`'s own databus talks to the native `mp` global internally
+ * (mirroring the same "Local Approach" pattern `getNativeMp` follows for
+ * the rest of the adapter), so nothing here needs to thread it through.
  */
-export function createCyberMpRpc(): CyberMpRpc {
+export async function createCyberMpRpc(): Promise<CyberMpRpc> {
+  const { RpcServer } = await import("@cybermp/rpc-server")
   const rpcServer = new RpcServer({ name: "cora" })
   const registeredNames = new Set<string>()
 

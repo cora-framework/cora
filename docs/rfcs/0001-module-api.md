@@ -135,6 +135,32 @@ A role is a name plus a flat list of permission strings. Permission strings foll
 
 A stored permission matches a query permission if it is identical, or if it ends in `.*` and the query is a strict descendant of the prefix before the `*`. The wildcard is a subtree match, not a single-segment match: stored `cora.admin.*` matches `cora.admin.kick` and the deeper `cora.admin.kick.force`, and stored `cora.*` matches anything under `cora.` at any depth. It never matches the bare prefix without a trailing segment - stored `cora.admin.*` does not match the query `cora.admin` itself, only permissions strictly under it.
 
+### Config
+
+The kernel accepts an optional raw `config` object at `createKernel({ config })` (`{}` if omitted) and hands it, unparsed, to every module as `ctx.config: Record<string, unknown>`. The kernel does not know or care about any module's config shape - each module declares its own schema with `defineConfig` (a thin zod wrapper) and parses its slice of `ctx.config` with `loadConfig`, which returns a `Result` rather than throwing:
+
+```ts
+import { defineConfig, loadConfig, type CoraModuleContext } from "@cora-framework/core"
+import { z } from "zod"
+
+const greeterConfigSchema = defineConfig(
+  z.object({
+    welcomeMessage: z.string().default("welcome"),
+  }),
+)
+
+function register(ctx: CoraModuleContext) {
+  const result = loadConfig(greeterConfigSchema, ctx.config)
+  if (!result.ok) {
+    throw new Error(`invalid greeter config: ${result.error}`)
+  }
+
+  const config = result.value // { welcomeMessage: string }
+}
+```
+
+Throwing on an invalid `Result` inside `register()` is the expected pattern: it lets the kernel's normal error-boundary handling (see Motivation above) disable the module and log the failure, rather than every module reinventing its own config-error reporting.
+
 ### Migrations
 
 A module declares its schema with `migrations?: CoraMigration[]` on the object passed to `defineModule` (built with `defineMigrations` from `@cora-framework/db`, namespaced under the module's own id). Migrations are forward-only and checksummed: there is no `down()`, and an already-applied migration is skipped on subsequent boots once its checksum is verified to match. The kernel runs every module's migrations together, before any module's `register()` is called - core's own permissions migrations (`corePermissionsMigrations`, module-namespaced `"core"`) always run first, ahead of every application module, since `ctx.permissions` must be usable from any module's `register()`. Migrations are intentionally not rolled back if a later module fails to register: a disabled module's tables simply go unused rather than being torn down, which keeps boot deterministic and avoids re-running destructive migration logic on every restart.
