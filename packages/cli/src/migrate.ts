@@ -1,6 +1,6 @@
-import type { CoraDb, CoraDbConfig, CoraMigration } from "@cora/db"
-import { runMigrations } from "@cora/db"
-import { err, ok, type Result } from "@cora/lib"
+import type { CoraDb, CoraDbConfig, CoraMigration } from "@cora-framework/db"
+import { runMigrations } from "@cora-framework/db"
+import { err, ok, type Result } from "@cora-framework/lib"
 
 export interface MigrateConfig {
   db: CoraDbConfig
@@ -80,7 +80,7 @@ export function validateMigrateConfig(
 
 /**
  * Run pending migrations against an already-constructed database handle.
- * Thin delegation to @cora/db's `runMigrations`, kept as its own function so
+ * Thin delegation to @cora-framework/db's `runMigrations`, kept as its own function so
  * the bin command can inject the database for testing.
  */
 export async function runMigrateWithDb(

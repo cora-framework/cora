@@ -12,7 +12,7 @@ const DEFAULT_CONNECTION_LIMIT = 10
 /**
  * Create a database handle backed by a mysql2 connection pool.
  *
- * mysql2 is an optional peer dependency of @cora/db. It is imported lazily
+ * mysql2 is an optional peer dependency of @cora-framework/db. It is imported lazily
  * inside the pool factory (called once by kysely on the first query) so
  * that importing this module - or the package entry point - never requires
  * mysql2 to be installed. Only calling `createDatabase` and then running a
@@ -45,7 +45,7 @@ export function createDatabase<Schema = Record<string, unknown>>(
  * Create an in-memory SQLite-backed database handle, intended for tests and
  * local development only - not for production use.
  *
- * better-sqlite3 is a devDependency of @cora/db. It is imported lazily
+ * better-sqlite3 is a devDependency of @cora-framework/db. It is imported lazily
  * inside the database factory (called once by kysely on the first query) so
  * that importing this module - or the package entry point - never requires
  * better-sqlite3 to be installed unless `createTestDatabase` is actually

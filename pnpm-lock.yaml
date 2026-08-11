@@ -35,7 +35,7 @@ importers:
 
   apps/harness:
     dependencies:
-      '@cora/ui':
+      '@cora-framework/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       react:
@@ -63,10 +63,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@cora/db':
+      '@cora-framework/db':
         specifier: workspace:*
         version: link:../db
-      '@cora/lib':
+      '@cora-framework/lib':
         specifier: workspace:*
         version: link:../lib
       commander:
@@ -82,7 +82,7 @@ importers:
 
   packages/create-cora-server:
     dependencies:
-      '@cora/lib':
+      '@cora-framework/lib':
         specifier: workspace:*
         version: link:../lib
     devDependencies:
@@ -95,7 +95,7 @@ importers:
 
   packages/db:
     dependencies:
-      '@cora/lib':
+      '@cora-framework/lib':
         specifier: workspace:*
         version: link:../lib
       kysely:

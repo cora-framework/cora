@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "@cora/lib"
+import { err, ok, type Result } from "@cora-framework/lib"
 
 export interface CoraDbConfig {
   host: string

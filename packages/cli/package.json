@@ -1,5 +1,5 @@
 {
-  "name": "@cora/cli",
+  "name": "@cora-framework/cli",
   "version": "0.0.0",
   "description": "Command-line tooling for the CORA framework.",
   "license": "MIT",
@@ -23,8 +23,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@cora/db": "workspace:*",
-    "@cora/lib": "workspace:*",
+    "@cora-framework/db": "workspace:*",
+    "@cora-framework/lib": "workspace:*",
     "commander": "^15.0.0"
   },
   "devDependencies": {

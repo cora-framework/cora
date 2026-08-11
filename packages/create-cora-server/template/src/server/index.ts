@@ -5,14 +5,14 @@ import {
   type Result,
   sphereZone,
   type Vec3,
-} from "@cora/lib"
+} from "@cora-framework/lib"
 
 const SPAWN_ZONE = sphereZone({ x: 0, y: 0, z: 0 }, 50)
 
 /**
  * Checks whether a player position lies inside the sample spawn zone.
  * Replace this with real game logic - it exists to demonstrate wiring
- * @cora/lib's Result and zone helpers into a server module.
+ * @cora-framework/lib's Result and zone helpers into a server module.
  */
 export function checkSpawnZone(
   position: Vec3,

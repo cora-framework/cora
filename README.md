@@ -20,10 +20,10 @@ CORA is a modular roleplay framework for CyberMP, engineered the way the platfor
 
 | Package | Description | Standalone? |
 | --- | --- | --- |
-| `@cora/lib` | Shared utilities (Result, locales, zones) | ✅ |
-| `@cora/db` | Typed persistence layer with per-module migrations | ✅ |
-| `@cora/ui` | React component kit for CEF UIs | ✅ |
-| `@cora/core` | Framework kernel: players, modules, permissions, bridge | Phase 2 |
+| `@cora-framework/lib` | Shared utilities (Result, locales, zones) | ✅ |
+| `@cora-framework/db` | Typed persistence layer with per-module migrations | ✅ |
+| `@cora-framework/ui` | React component kit for CEF UIs | ✅ |
+| `@cora-framework/core` | Framework kernel: players, modules, permissions, bridge | Phase 2 |
 
 ## Roadmap
 

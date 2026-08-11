@@ -1,4 +1,4 @@
-# @cora/lib
+# @cora-framework/lib
 
 Shared utilities for the [CORA framework](https://github.com/cora-framework/cora) - usable standalone in any CyberMP project, no framework required.
 
@@ -7,7 +7,7 @@ Part of **CORA - Cyber Online Runtime Architecture**, the open-source framework 
 ## Install
 
 ```sh
-pnpm add @cora/lib
+pnpm add @cora-framework/lib
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ pnpm add @cora/lib
 A discriminated union for Result types that pairs success and error values.
 
 ```ts
-import { ok, err, type Result } from "@cora/lib"
+import { ok, err, type Result } from "@cora-framework/lib"
 
 function parsePort(raw: string): Result<number, string> {
   const n = Number(raw)
@@ -51,7 +51,7 @@ import {
   normalize,
   lerp,
   equalsApprox,
-} from "@cora/lib"
+} from "@cora-framework/lib"
 
 const a = vec3(1, 2, 3)
 const b = vec3(4, 5, 6)
@@ -90,7 +90,7 @@ import {
   isInside,
   distanceToCenter,
   type Zone,
-} from "@cora/lib"
+} from "@cora-framework/lib"
 
 // Sphere: point + radius
 const sphere = sphereZone(vec3(0, 0, 0), 10)
@@ -121,7 +121,7 @@ const dist = distanceToCenter(box, point)    // scalar distance to zone center
 A minimal event emitter where each instance owns its listeners (no global singleton).
 
 ```ts
-import { TypedEmitter } from "@cora/lib"
+import { TypedEmitter } from "@cora-framework/lib"
 
 type GameEvents = {
   playerJoined: [playerId: string]
@@ -173,7 +173,7 @@ Emit dispatches over a snapshot of listeners taken at call time, so handlers add
 Simple string-based locale system with interpolation, no external i18n libraries required.
 
 ```ts
-import { createLocale, type Locale } from "@cora/lib"
+import { createLocale, type Locale } from "@cora-framework/lib"
 
 const locale = createLocale({
   locales: {

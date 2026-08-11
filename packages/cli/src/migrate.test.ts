@@ -1,5 +1,5 @@
-import type { CoraMigration } from "@cora/db"
-import { createTestDatabase } from "@cora/db"
+import type { CoraMigration } from "@cora-framework/db"
+import { createTestDatabase } from "@cora-framework/db"
 import { describe, expect, it } from "vitest"
 import {
   type MigrateConfig,

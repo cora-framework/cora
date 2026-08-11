@@ -1,7 +1,17 @@
-import "@cora/ui/theme.css"
+import "@cora-framework/ui/theme.css"
 import "./harness.css"
-import type { CoraNotification, MenuItem, NotificationKind } from "@cora/ui"
-import { applyTheme, Dialog, Menu, Notifications, ProgressBar } from "@cora/ui"
+import type {
+  CoraNotification,
+  MenuItem,
+  NotificationKind,
+} from "@cora-framework/ui"
+import {
+  applyTheme,
+  Dialog,
+  Menu,
+  Notifications,
+  ProgressBar,
+} from "@cora-framework/ui"
 import type { JSX } from "react"
 import { useEffect, useState } from "react"
 import { createMockNotifications, mockRpc } from "./mock"
@@ -125,7 +135,7 @@ export function App(): JSX.Element {
     <div className="harness">
       <header className="harness-header">
         <h1>CORA UI Harness</h1>
-        <p>A dev gallery for exercising @cora/ui components.</p>
+        <p>A dev gallery for exercising @cora-framework/ui components.</p>
       </header>
 
       <section className="harness-section">

@@ -41,12 +41,12 @@ my-server/
 ```
 
 Generated files include:
-- **package.json**: Dependencies for @cora/lib, @cora/db, @cora/cli, kysely (workspace linked until first npm publish), plus TypeScript, Vitest, and Biome devDependencies
+- **package.json**: Dependencies for @cora-framework/lib, @cora-framework/db, @cora-framework/cli, kysely (workspace linked until first npm publish), plus TypeScript, Vitest, and Biome devDependencies
 - **tsconfig.json**: TypeScript configuration targeting ES2022 with strict mode
 - **biome.json**: Code formatter and linter configuration
 - **.gitignore**: Standard Node.js exclusions
 - **cora.migrate.mjs**: Example migration configuration for running `cora migrate`
-- **src/server/index.ts**: Starter module using Result types and zone utilities from @cora/lib
+- **src/server/index.ts**: Starter module using Result types and zone utilities from @cora-framework/lib
 - **src/server/index.test.ts**: Minimal Vitest test demonstrating the test setup
 
 ## Next Steps
