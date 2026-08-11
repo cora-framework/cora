@@ -14,7 +14,7 @@ External assets to claim for CORA. Items marked (human) need Dietrich's accounts
 
 - [ ] X/Twitter handle (e.g. `@coraframework`)
 - [ ] YouTube channel (dev logs / UI previews)
-- [ ] Docs hosting: Cloudflare Pages or GitHub Pages for `apps/docs` → coraframework.dev
+- [x] Docs hosting: GitHub Pages for `apps/docs` - DONE 2026-08-11 - https://cora-framework.github.io/cora/ - move to coraframework.dev after domain purchase
 - [ ] Mail: `conduct@` + `hello@` on the project domain (replace interim conduct address in CODE_OF_CONDUCT.md when live)
 
 ## Explicitly NOT doing
