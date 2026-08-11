@@ -1,4 +1,5 @@
 import type { CharacterSummary } from "@cora-framework/characters"
+import type { SlotView } from "@cora-framework/inventory/ui"
 import type { CoraNotification } from "@cora-framework/ui"
 
 // Placeholder mock data layer for the harness. This will eventually be
@@ -53,6 +54,83 @@ export function createMockNotifications(): CoraNotification[] {
       message: "Notifications shown here are mock data, not live events.",
     },
   ]
+}
+
+/**
+ * Mock item catalog for the harness's Inventory section, shaped like
+ * `@cora-framework/inventory`'s `ItemDefinition` but kept local rather than
+ * importing `defineItemCatalog` - the harness only needs `label` and
+ * `category`, both used by the mock move/equip logic below.
+ */
+export interface MockInventoryItem {
+  id: string
+  label: string
+  category: "weapon" | "consumable" | "gear" | "misc"
+}
+
+export const MOCK_INVENTORY_CATALOG: MockInventoryItem[] = [
+  { id: "medium-pistol", label: "Medium Pistol", category: "weapon" },
+  { id: "combat-knife", label: "Combat Knife", category: "weapon" },
+  { id: "stim-pack", label: "Stim Pack", category: "consumable" },
+  { id: "armor-jacket", label: "Armor Jacket", category: "gear" },
+  { id: "scrap-metal", label: "Scrap Metal", category: "misc" },
+]
+
+const MOCK_CATALOG_LABELS: Record<string, string> = Object.fromEntries(
+  MOCK_INVENTORY_CATALOG.map((item) => [item.id, item.label]),
+)
+
+export function mockInventoryLabelFor(itemId: string): string {
+  return MOCK_CATALOG_LABELS[itemId] ?? itemId
+}
+
+export function mockCatalogCategoryFor(itemId: string): string | undefined {
+  return MOCK_INVENTORY_CATALOG.find((item) => item.id === itemId)?.category
+}
+
+const MOCK_INVENTORY_SLOT_COUNT = 16
+
+export function createMockInventorySlots(): SlotView[] {
+  const slots: SlotView[] = Array.from(
+    { length: MOCK_INVENTORY_SLOT_COUNT },
+    (_, index) => ({ slot: index }),
+  )
+  slots[0] = {
+    slot: 0,
+    itemId: "medium-pistol",
+    label: mockInventoryLabelFor("medium-pistol"),
+    quantity: 1,
+    equipped: true,
+  }
+  slots[1] = {
+    slot: 1,
+    itemId: "combat-knife",
+    label: mockInventoryLabelFor("combat-knife"),
+    quantity: 1,
+    equipped: false,
+  }
+  slots[2] = {
+    slot: 2,
+    itemId: "stim-pack",
+    label: mockInventoryLabelFor("stim-pack"),
+    quantity: 6,
+    equipped: false,
+  }
+  slots[3] = {
+    slot: 3,
+    itemId: "armor-jacket",
+    label: mockInventoryLabelFor("armor-jacket"),
+    quantity: 1,
+    equipped: false,
+  }
+  slots[4] = {
+    slot: 4,
+    itemId: "scrap-metal",
+    label: mockInventoryLabelFor("scrap-metal"),
+    quantity: 12,
+    equipped: false,
+  }
+  return slots
 }
 
 export function mockRpc<T>(data: T, delayMs = 300): Promise<T> {

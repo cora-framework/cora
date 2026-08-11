@@ -1,8 +1,11 @@
 import "@cora-framework/ui/theme.css"
 import "@cora-framework/characters/ui/character-select.css"
+import "@cora-framework/inventory/ui/inventory-grid.css"
 import "./harness.css"
 import type { CharacterSummary } from "@cora-framework/characters"
 import { CharacterSelect } from "@cora-framework/characters/ui"
+import type { SlotView } from "@cora-framework/inventory/ui"
+import { InventoryGrid } from "@cora-framework/inventory/ui"
 import type {
   CoraNotification,
   MenuItem,
@@ -17,7 +20,34 @@ import {
 } from "@cora-framework/ui"
 import type { JSX } from "react"
 import { useEffect, useState } from "react"
-import { createMockCharacters, createMockNotifications, mockRpc } from "./mock"
+import {
+  createMockCharacters,
+  createMockInventorySlots,
+  createMockNotifications,
+  mockCatalogCategoryFor,
+  mockRpc,
+} from "./mock"
+
+const MOCK_INVENTORY_MAX_WEIGHT = 100
+const MOCK_INVENTORY_ITEM_WEIGHT = 2
+
+/**
+ * Rebuilds a `SlotView` for `slotNumber` from `content`'s
+ * itemId/quantity/equipped fields, including each field only when it is
+ * actually present on `content` rather than assigning a possibly-`undefined`
+ * value directly - required under `exactOptionalPropertyTypes`, which
+ * distinguishes an omitted optional property from one explicitly set to
+ * `undefined`.
+ */
+function withContent(slotNumber: number, content: SlotView): SlotView {
+  return {
+    slot: slotNumber,
+    ...(content.itemId !== undefined ? { itemId: content.itemId } : {}),
+    ...(content.label !== undefined ? { label: content.label } : {}),
+    ...(content.quantity !== undefined ? { quantity: content.quantity } : {}),
+    ...(content.equipped !== undefined ? { equipped: content.equipped } : {}),
+  }
+}
 
 const MAX_MOCK_CHARACTERS = 4
 
@@ -174,6 +204,109 @@ export function App(): JSX.Element {
     logCharacterAction(`deleted "${character?.name ?? id}"`)
   }
 
+  const [inventorySlots, setInventorySlots] = useState<SlotView[]>(() =>
+    createMockInventorySlots(),
+  )
+  const [inventoryLog, setInventoryLog] = useState<string[]>([])
+
+  function logInventoryAction(entry: string): void {
+    setInventoryLog((current) => [
+      `${new Date().toLocaleTimeString()} - ${entry}`,
+      ...current,
+    ])
+  }
+
+  const inventoryUsedWeight = inventorySlots.reduce(
+    (sum, slot) => sum + (slot.quantity ?? 0) * MOCK_INVENTORY_ITEM_WEIGHT,
+    0,
+  )
+
+  function handleInventoryMove(fromSlot: number, toSlot: number): void {
+    setInventorySlots((current) => {
+      const from = current.find((slot) => slot.slot === fromSlot)
+      const to = current.find((slot) => slot.slot === toSlot)
+      if (from === undefined || to === undefined || from.itemId === undefined) {
+        return current
+      }
+      // Swap contents when the target is occupied (demo semantics only -
+      // the real server-side moveSlot merges same-item stacks; see
+      // src/server/operations.ts). Rebuilt via `withContent` rather than
+      // direct property assignment so an absent (not merely undefined)
+      // field stays absent under `exactOptionalPropertyTypes`.
+      const fromContent = withContent(fromSlot, to)
+      const toContent = withContent(toSlot, from)
+      return current.map((slot) => {
+        if (slot.slot === fromSlot) return fromContent
+        if (slot.slot === toSlot) return toContent
+        return slot
+      })
+    })
+    logInventoryAction(`moved slot ${fromSlot} -> ${toSlot}`)
+  }
+
+  function handleInventorySplit(
+    fromSlot: number,
+    toSlot: number,
+    quantity: number,
+  ): void {
+    setInventorySlots((current) => {
+      const from = current.find((slot) => slot.slot === fromSlot)
+      const to = current.find((slot) => slot.slot === toSlot)
+      if (
+        from === undefined ||
+        to === undefined ||
+        from.itemId === undefined ||
+        to.itemId !== undefined ||
+        from.quantity === undefined ||
+        quantity >= from.quantity
+      ) {
+        return current
+      }
+      const fromContent: SlotView = {
+        ...from,
+        quantity: from.quantity - quantity,
+      }
+      const toContent: SlotView = {
+        slot: toSlot,
+        itemId: from.itemId,
+        ...(from.label !== undefined ? { label: from.label } : {}),
+        quantity,
+      }
+      return current.map((slot) => {
+        if (slot.slot === fromSlot) return fromContent
+        if (slot.slot === toSlot) return toContent
+        return slot
+      })
+    })
+    logInventoryAction(
+      `split ${quantity} from slot ${fromSlot} into slot ${toSlot}`,
+    )
+  }
+
+  function handleInventoryEquip(slot: number): void {
+    setInventorySlots((current) => {
+      const target = current.find((item) => item.slot === slot)
+      if (target === undefined || target.itemId === undefined) {
+        return current
+      }
+      const category = mockCatalogCategoryFor(target.itemId)
+      return current.map((item) => {
+        if (item.slot === slot) {
+          return { ...item, equipped: true }
+        }
+        if (
+          category !== undefined &&
+          item.itemId !== undefined &&
+          mockCatalogCategoryFor(item.itemId) === category
+        ) {
+          return { ...item, equipped: false }
+        }
+        return item
+      })
+    })
+    logInventoryAction(`equipped slot ${slot}`)
+  }
+
   return (
     <div className="harness">
       <header className="harness-header">
@@ -271,6 +404,38 @@ export function App(): JSX.Element {
           ) : (
             <ul>
               {characterLog.map((entry) => (
+                <li key={entry}>{entry}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <section className="harness-section">
+        <h2>Inventory</h2>
+        <p className="harness-status">
+          @cora-framework/inventory's InventoryGrid, rendered with a mock
+          catalog and mutable local slot state (click a filled slot to select it
+          as the move source, then click a different slot to move; click Split
+          on a selected multi-quantity slot then a target slot to split; click
+          Equip on any slot).
+        </p>
+        <InventoryGrid
+          slots={inventorySlots}
+          columns={8}
+          usedWeight={inventoryUsedWeight}
+          maxWeight={MOCK_INVENTORY_MAX_WEIGHT}
+          onMove={handleInventoryMove}
+          onSplit={handleInventorySplit}
+          onEquip={handleInventoryEquip}
+        />
+        <div className="harness-log">
+          <h3>Action log</h3>
+          {inventoryLog.length === 0 ? (
+            <p className="harness-log-empty">No actions yet.</p>
+          ) : (
+            <ul>
+              {inventoryLog.map((entry) => (
                 <li key={entry}>{entry}</li>
               ))}
             </ul>
