@@ -1,4 +1,4 @@
-import { defineMigrations } from "@cora/db"
+import { defineMigrations } from "@cora-framework/db"
 
 const migrations = defineMigrations("app", [
   {

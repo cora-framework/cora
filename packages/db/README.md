@@ -1,4 +1,4 @@
-# @cora/db
+# @cora-framework/db
 
 Typed database client for the [CORA framework](https://github.com/cora-framework/cora) - usable standalone in any CyberMP project, no framework required.
 
@@ -7,7 +7,7 @@ Part of **CORA - Cyber Online Runtime Architecture**, the open-source framework 
 ## Install
 
 ```sh
-pnpm add @cora/db kysely mysql2
+pnpm add @cora-framework/db kysely mysql2
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ pnpm add @cora/db kysely mysql2
 Resolve database configuration from environment variables (or pass explicit values):
 
 ```ts
-import { resolveConfig, createDatabase } from "@cora/db"
+import { resolveConfig, createDatabase } from "@cora-framework/db"
 
 const configResult = resolveConfig({
   env: {
@@ -48,7 +48,7 @@ Expected environment variables:
 Define your schema and create a typed database handle:
 
 ```ts
-import { createDatabase, type CoraDb } from "@cora/db"
+import { createDatabase, type CoraDb } from "@cora-framework/db"
 
 interface User {
   id: number
@@ -79,7 +79,7 @@ if (user) {
 Define migrations using `defineMigrations` and run them with `runMigrations`. Migrations are forward-only and checksummed - never edit an already-applied migration.
 
 ```ts
-import { defineMigrations, runMigrations } from "@cora/db"
+import { defineMigrations, runMigrations } from "@cora-framework/db"
 import { sql, type Kysely } from "kysely"
 
 const migrations = defineMigrations("schema", [
@@ -125,7 +125,7 @@ Migration execution is idempotent - already-applied migrations (verified by chec
 For tests and local development, use `createTestDatabase` to spin up an in-memory SQLite database:
 
 ```ts
-import { createTestDatabase } from "@cora/db"
+import { createTestDatabase } from "@cora-framework/db"
 
 const testDb = createTestDatabase<Schema>()
 
@@ -144,12 +144,12 @@ pnpm add -D better-sqlite3
 
 ## Performance Notes
 
-- **mysql2** is an optional peer dependency and imported lazily - importing @cora/db never requires it to be installed.
+- **mysql2** is an optional peer dependency and imported lazily - importing @cora-framework/db never requires it to be installed.
 - **better-sqlite3** is a devDependency and imported lazily - only `createTestDatabase` requires it.
 - Both are imported on first query execution, not at module load time.
 
 ## SQL Dialect Notes
 
-@cora/db supports MySQL (via mysql2) and SQLite (via better-sqlite3). All internal Kysely calls use dialect-portable builder patterns. Migration authors must be aware of dialect-specific SQL syntax when writing custom `up()` functions - for example, SQLite has different `ALTER TABLE` behavior than MySQL.
+@cora-framework/db supports MySQL (via mysql2) and SQLite (via better-sqlite3). All internal Kysely calls use dialect-portable builder patterns. Migration authors must be aware of dialect-specific SQL syntax when writing custom `up()` functions - for example, SQLite has different `ALTER TABLE` behavior than MySQL.
 
 MySQL and MariaDB perform an implicit commit on DDL statements, so the per-migration transaction rollback only fully protects DML - a migration that fails after already running DDL may leave the schema partially applied and must be repaired manually.

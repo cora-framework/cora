@@ -1,4 +1,4 @@
-# @cora/cli
+# @cora-framework/cli
 
 Command-line tools for the [CORA framework](https://github.com/cora-framework/cora) - usable standalone for managing database migrations and checking the development environment.
 
@@ -7,7 +7,7 @@ Part of **CORA - Cyber Online Runtime Architecture**, the open-source framework 
 ## Install
 
 ```sh
-pnpm add @cora/cli
+pnpm add @cora-framework/cli
 ```
 
 ## Usage
@@ -50,7 +50,7 @@ The `--config` option (short: `-c`) specifies the path to a migration configurat
 Configuration file format (ESM):
 
 ```mjs
-import { defineMigrations } from "@cora/db"
+import { defineMigrations } from "@cora-framework/db"
 
 const migrations = defineMigrations("app", [
   {
@@ -97,7 +97,7 @@ Output:
 
 ## TypeScript Support
 
-@cora/cli exports types for programmatic use:
+@cora-framework/cli exports types for programmatic use:
 
 ```ts
 import {
@@ -107,7 +107,7 @@ import {
   type MigrateConfig,
   validateMigrateConfig,
   runMigrateWithDb,
-} from "@cora/cli"
+} from "@cora-framework/cli"
 ```
 
 - `runDoctor(env: DoctorEnv): DoctorCheck[]` - Run environment checks

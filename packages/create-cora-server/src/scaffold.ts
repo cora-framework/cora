@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises"
 import { dirname, join, relative, sep } from "node:path"
 import { fileURLToPath } from "node:url"
-import { err, ok, type Result } from "@cora/lib"
+import { err, ok, type Result } from "@cora-framework/lib"
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 

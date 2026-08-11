@@ -1,5 +1,5 @@
 {
-  "name": "@cora/ui",
+  "name": "@cora-framework/ui",
   "version": "0.0.0",
   "description": "UI components and theme tokens for the CORA framework.",
   "license": "MIT",

@@ -1,5 +1,5 @@
 {
-  "name": "@cora/db",
+  "name": "@cora-framework/db",
   "version": "0.0.0",
   "description": "Typed persistence layer for the CORA framework - standalone-usable.",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@cora/lib": "workspace:*",
+    "@cora-framework/lib": "workspace:*",
     "kysely": "^0.28.0"
   },
   "peerDependencies": {

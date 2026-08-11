@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto"
-import { err, ok, type Result } from "@cora/lib"
+import { err, ok, type Result } from "@cora-framework/lib"
 import type { Kysely } from "kysely"
 import type { CoraDb } from "./database"
 

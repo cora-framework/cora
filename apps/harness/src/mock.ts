@@ -1,4 +1,4 @@
-import type { CoraNotification } from "@cora/ui"
+import type { CoraNotification } from "@cora-framework/ui"
 
 // Placeholder mock data layer for the harness. This will eventually be
 // replaced by a typed RPC mock layer that mirrors the real CORA transport,

@@ -1,4 +1,4 @@
-# @cora/ui
+# @cora-framework/ui
 
 React component kit for the [CORA framework](https://github.com/cora-framework/cora) - usable standalone in any React project, no framework required.
 
@@ -7,15 +7,15 @@ Part of **CORA - Cyber Online Runtime Architecture**, the open-source framework 
 ## Install
 
 ```sh
-pnpm add @cora/ui react
+pnpm add @cora-framework/ui react
 ```
 
 ## Theme
 
-CSS custom properties are defined in `@cora/ui/theme.css`. Import it in your application:
+CSS custom properties are defined in `@cora-framework/ui/theme.css`. Import it in your application:
 
 ```ts
-import "@cora/ui/theme.css"
+import "@cora-framework/ui/theme.css"
 ```
 
 All components use the `--cora-*` token namespace. Available tokens:
@@ -35,7 +35,7 @@ All components use the `--cora-*` token namespace. Available tokens:
 Override tokens programmatically with `applyTheme()`:
 
 ```ts
-import { applyTheme, coraTheme } from "@cora/ui"
+import { applyTheme, coraTheme } from "@cora-framework/ui"
 
 const overrides = {
   "--cora-accent": "#ff00ff",
@@ -53,7 +53,7 @@ applyTheme(document.documentElement, overrides)
 Display dismissible notifications with auto-timeout. Keep the `onDismiss` callback stable with `useCallback` - the timer depends on it.
 
 ```tsx
-import { Notifications, type CoraNotification } from "@cora/ui"
+import { Notifications, type CoraNotification } from "@cora-framework/ui"
 import { useCallback, useState } from "react"
 
 export function MyNotifications() {
@@ -90,7 +90,7 @@ export function MyNotifications() {
 Interactive menu with keyboard navigation. Supports controlled (via `selectedId`) or uncontrolled selection.
 
 ```tsx
-import { Menu, type MenuItem } from "@cora/ui"
+import { Menu, type MenuItem } from "@cora-framework/ui"
 import { useState } from "react"
 
 export function MyMenu() {
@@ -119,7 +119,7 @@ export function MyMenu() {
 Modal dialog with confirm/cancel actions. Press Escape to cancel.
 
 ```tsx
-import { Dialog } from "@cora/ui"
+import { Dialog } from "@cora-framework/ui"
 import { useState } from "react"
 
 export function MyDialog() {
@@ -151,7 +151,7 @@ export function MyDialog() {
 Linear progress indicator with optional label. Value is clamped between 0 and `max`.
 
 ```tsx
-import { ProgressBar } from "@cora/ui"
+import { ProgressBar } from "@cora-framework/ui"
 import { useState } from "react"
 
 export function MyProgress() {
@@ -187,5 +187,5 @@ The harness runs at `http://localhost:5173` and hot-reloads as you edit componen
 All components export TypeScript types. Import types for better IDE support:
 
 ```ts
-import type { CoraNotification, MenuItem } from "@cora/ui"
+import type { CoraNotification, MenuItem } from "@cora-framework/ui"
 ```
