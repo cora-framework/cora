@@ -6,10 +6,14 @@ export {
   type CharacterSummary,
   type CharactersError,
   type CharactersErrorResult,
+  type CharactersUiClosePayload,
+  type CharactersUiOpenPayload,
   CORA_CHARACTERS_CREATE,
   CORA_CHARACTERS_DELETE,
   CORA_CHARACTERS_LIST,
   CORA_CHARACTERS_SELECT,
+  CORA_CHARACTERS_UI_CLOSE,
+  CORA_CHARACTERS_UI_OPEN,
   type CreateCharacterInput,
   type CreateCharacterResult,
   createCharacterInputSchema,
@@ -35,3 +39,10 @@ export {
   createCharactersHandlers,
   createCharactersModule,
 } from "./server/characters-module.js"
+export {
+  type NonPlayingSession,
+  type PlayerSession,
+  type PlayingSession,
+  SessionManager,
+  type SessionStatus,
+} from "./server/session.js"

@@ -6,6 +6,16 @@ export const CORA_CHARACTERS_CREATE = "cora.characters.create"
 export const CORA_CHARACTERS_DELETE = "cora.characters.delete"
 export const CORA_CHARACTERS_SELECT = "cora.characters.select"
 
+/**
+ * Client-bound broadcast names used by the session/spawn state machine
+ * (`src/server/session.ts`). These are not rpc procedures registered via
+ * `registerRpcHandler` - they are one-way `ctx.platform.callClient` calls
+ * the server pushes to a specific player, picked up by the browser-relay
+ * client wiring landing in a later task.
+ */
+export const CORA_CHARACTERS_UI_OPEN = "cora.characters.ui.open"
+export const CORA_CHARACTERS_UI_CLOSE = "cora.characters.ui.close"
+
 /** Maximum number of characters a single player may own at once. */
 export const MAX_CHARACTERS_PER_PLAYER = 4
 
@@ -73,6 +83,7 @@ export type CharactersError =
   | "not_found"
   | "not_owner"
   | "already_playing"
+  | "active_character"
 
 export interface CharactersErrorResult {
   ok: false
@@ -112,3 +123,13 @@ export const selectCharacterInputSchema = z.object({
   characterId: z.number().int().positive(),
 })
 export type SelectCharacterInput = z.infer<typeof selectCharacterInputSchema>
+
+/** Payload of the `cora.characters.ui.open` client call. */
+export interface CharactersUiOpenPayload {
+  characters: CharacterSummary[]
+}
+
+/** Payload of the `cora.characters.ui.close` client call. */
+export interface CharactersUiClosePayload {
+  spawn: CharacterPosition
+}

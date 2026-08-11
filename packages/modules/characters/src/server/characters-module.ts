@@ -9,10 +9,14 @@ import { z } from "zod"
 import {
   type CharacterSummary,
   type CharactersErrorResult,
+  type CharactersUiClosePayload,
+  type CharactersUiOpenPayload,
   CORA_CHARACTERS_CREATE,
   CORA_CHARACTERS_DELETE,
   CORA_CHARACTERS_LIST,
   CORA_CHARACTERS_SELECT,
+  CORA_CHARACTERS_UI_CLOSE,
+  CORA_CHARACTERS_UI_OPEN,
   type CreateCharacterResult,
   createCharacterInputSchema,
   DEFAULT_SPAWN_POSITION,
@@ -26,6 +30,7 @@ import {
   selectCharacterInputSchema,
 } from "../contract.js"
 import { type CharactersTable, charactersMigrations } from "../migrations.js"
+import { SessionManager } from "./session.js"
 
 type CharacterRow = Selectable<CharactersTable["characters"]>
 
@@ -70,11 +75,17 @@ function licenseOf(playerId: number): string {
 }
 
 /**
- * Builds the four `cora.characters.*` rpc handlers bound to `ctx`. Split out
- * from `register()` so it can be unit tested without a full kernel boot if
- * ever needed, though the module's own test suite boots a real kernel.
+ * Builds the four `cora.characters.*` rpc handlers bound to `ctx` and
+ * `sessions`. Split out from `register()` so it can be unit tested without a
+ * full kernel boot if ever needed, though the module's own test suite boots
+ * a real kernel. `sessions` must be the same `SessionManager` instance
+ * `register()` wires up to the connect/disconnect/death hooks, so the
+ * `select`/`delete` guards below see session state created by those hooks.
  */
-export function createCharactersHandlers(ctx: CoraModuleContext) {
+export function createCharactersHandlers(
+  ctx: CoraModuleContext,
+  sessions: SessionManager,
+) {
   const db = ctx.db as unknown as CoraDb<CharactersTable>
 
   return {
@@ -166,6 +177,12 @@ export function createCharactersHandlers(ctx: CoraModuleContext) {
       if (row.player_license !== licenseOf(playerId)) {
         return { ok: false, error: "not_owner" }
       }
+      // Deleting a character while playing another one (or none) is fine;
+      // deleting the ACTIVE character out from under the current session is
+      // not, since the client has already been told to spawn into it.
+      if (sessions.activeCharacterId(playerId) === parsed.data.characterId) {
+        return { ok: false, error: "active_character" }
+      }
 
       await db
         .deleteFrom("characters")
@@ -191,6 +208,12 @@ export function createCharactersHandlers(ctx: CoraModuleContext) {
       if (row.player_license !== licenseOf(playerId)) {
         return { ok: false, error: "not_owner" }
       }
+      // A player already in a "playing" session (this character or any
+      // other) must disconnect/return to select before choosing again -
+      // there is no in-session character switch today.
+      if (sessions.isPlaying(playerId)) {
+        return { ok: false, error: "already_playing" }
+      }
 
       const now = new Date().toISOString()
       await db
@@ -205,6 +228,14 @@ export function createCharactersHandlers(ctx: CoraModuleContext) {
         row.position_z !== null
           ? { x: row.position_x, y: row.position_y, z: row.position_z }
           : DEFAULT_SPAWN_POSITION
+
+      sessions.setPlaying(playerId, parsed.data.characterId)
+      const closePayload: CharactersUiClosePayload = { spawn: position }
+      await ctx.platform.callClient(
+        playerId,
+        CORA_CHARACTERS_UI_CLOSE,
+        closePayload,
+      )
 
       return { ok: true, characterId: parsed.data.characterId, position }
     },
@@ -231,11 +262,54 @@ export function createCharactersModule(
     id: "characters",
     migrations: charactersMigrations,
     register(ctx) {
-      const handlers = createCharactersHandlers(ctx)
+      const db = ctx.db as unknown as CoraDb<CharactersTable>
+      const sessions = new SessionManager()
+      const handlers = createCharactersHandlers(ctx, sessions)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_LIST, handlers.list)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_CREATE, handlers.create)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_DELETE, handlers.delete)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_SELECT, handlers.select)
+
+      // playerConnected -> track the session (state "selecting") and push
+      // the player's own character list to open the select UI client-side.
+      ctx.hooks.onPlayerConnected((player) => {
+        sessions.startSelecting(player.id)
+        void handlers.list({}, player.id).then((result) => {
+          const characters = result.ok ? result.characters : []
+          const openPayload: CharactersUiOpenPayload = { characters }
+          return ctx.platform.callClient(
+            player.id,
+            CORA_CHARACTERS_UI_OPEN,
+            openPayload,
+          )
+        })
+      })
+
+      // playerDisconnected -> position persistence placeholder: the client
+      // does not yet report the character's live position back to the
+      // server, so there is nothing real to persist. We explicitly
+      // (re)write nulls rather than leaving the previous stored position in
+      // place, documenting "no position stored" as the deliberate
+      // placeholder state until a real position-reporting flow exists. The
+      // session is then cleared regardless of what state it was in.
+      ctx.hooks.onPlayerDisconnected((player) => {
+        const characterId = sessions.activeCharacterId(player.id)
+        if (characterId !== null) {
+          void db
+            .updateTable("characters")
+            .set({ position_x: null, position_y: null, position_z: null })
+            .where("id", "=", characterId)
+            .execute()
+        }
+        sessions.clear(player.id)
+      })
+
+      // playerDeath while playing -> session state is left untouched (stays
+      // "playing" with the same characterId). Respawn handling is deferred
+      // to a later phase: it depends on upstream respawn events that are
+      // not yet verified against a live server (see the plan's self-review
+      // notes).
+      ctx.hooks.onPlayerDeath(() => {})
     },
   })
 }
