@@ -13,7 +13,9 @@
     "lint:fix": "biome check --write .",
     "test": "vitest run",
     "build": "pnpm -r --if-present build",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "release": "pnpm build && changeset publish",
+    "version-packages": "changeset version && pnpm install --lockfile-only"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",

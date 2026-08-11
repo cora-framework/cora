@@ -20,6 +20,14 @@ Thanks for helping build the framework for CyberMP.
 
 Biome enforces formatting and lint (`pnpm lint:fix`). TypeScript is strict; don't introduce `any`.
 
+## Releasing
+
+CORA uses [Changesets](https://github.com/changesets/changesets) to version and publish packages.
+
+- Add a changeset to your PR with `pnpm changeset` whenever you change the public behavior of a published package. Pick the affected package(s), the bump type, and describe the change for the changelog.
+- Once changesets land on `main`, an automated workflow opens (or updates) a "chore: release packages" pull request that bumps versions and compiles changelogs.
+- Merging that pull request publishes the updated packages to npm.
+
 ## Governance
 
 CORA is maintained by its founding core team, which holds final decision authority. We work in public: decisions of consequence are documented in RFCs or issues, and dissent is welcome - held to the same standard of argument as any proposal.
