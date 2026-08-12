@@ -1,4 +1,5 @@
 import {
+  activeCharacterProviderToken,
   type CoraModule,
   type CoraModuleContext,
   defineModule,
@@ -277,6 +278,19 @@ export function createCharactersModule(
       const db = ctx.db as unknown as CoraDb<CharactersTable>
       const sessions = new SessionManager()
       const handlers = createCharactersHandlers(ctx, sessions)
+
+      // Publishes the core-standard active-character contract (RFC 0002) so
+      // other modules (e.g. inventory) can ask "is this player currently
+      // playing this character?" without importing characters directly -
+      // they resolve this token from `@cora-framework/core` lazily, at
+      // handler call time, via `ctx.services.get`.
+      ctx.services.provide(activeCharacterProviderToken, {
+        isActiveCharacter: (playerId, characterId) =>
+          sessions.isActiveCharacter(playerId, characterId),
+        getActiveCharacterId: (playerId) =>
+          sessions.getActiveCharacterId(playerId),
+      })
+
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_LIST, handlers.list)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_CREATE, handlers.create)
       ctx.platform.registerRpcHandler(CORA_CHARACTERS_DELETE, handlers.delete)

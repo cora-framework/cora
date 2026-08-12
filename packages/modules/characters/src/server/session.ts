@@ -117,4 +117,24 @@ export class SessionManager {
     const session = this.sessions.get(playerId)
     return session?.status === "playing" ? session.characterId : null
   }
+
+  /**
+   * The `ActiveCharacterProvider.getActiveCharacterId` surface (see
+   * `@cora-framework/core`'s `services/active-character.ts`) - a thin alias
+   * for `activeCharacterId`, kept as a separate method so the public
+   * cross-module provider contract has its own name independent of this
+   * class's internal vocabulary.
+   */
+  getActiveCharacterId(playerId: number): number | null {
+    return this.activeCharacterId(playerId)
+  }
+
+  /**
+   * The `ActiveCharacterProvider.isActiveCharacter` surface: true iff
+   * `playerId` currently has a `"playing"` session for exactly
+   * `characterId`.
+   */
+  isActiveCharacter(playerId: number, characterId: number): boolean {
+    return this.getActiveCharacterId(playerId) === characterId
+  }
 }

@@ -123,6 +123,48 @@ async function register(ctx: CoraModuleContext) {
 
 The kernel runs the permissions tables' own migrations (module-namespaced `"core"`, the one module id reserved by the kernel itself) before any application module registers, so `ctx.permissions` is always usable from `register()`.
 
+## Services
+
+`ctx.services` is a small typed registry that lets one module publish an implementation for a well-known contract and another module consume it later, without either importing the other. Services are keyed by `ServiceToken<T>` (created with `defineServiceToken`), namespaced by convention as `cora.<module>.<service>`, and resolved lazily - a consumer calls `ctx.services.get(token)` from inside a handler or hook body, at call time, not during `register()`, so it does not matter which module's `register()` ran first:
+
+```ts
+import {
+  createServiceRegistry,
+  defineServiceToken,
+} from "@cora-framework/core"
+
+const registry = createServiceRegistry()
+const greetingToken = defineServiceToken<() => string>("cora.greeter.greeting")
+
+registry.provide(greetingToken, () => "hello")
+registry.get(greetingToken)?.() // "hello"
+```
+
+`provide` throws if a token is already registered - a double-provide is a boot-time programming error, not something to silently overwrite. `get` returns `undefined` until a provider has registered.
+
+Core ships one standard token, `activeCharacterProviderToken`, for the case that motivated this design: a character-bound module asking whether a player currently has a given character active, without depending on the module that owns character sessions:
+
+```ts
+import {
+  activeCharacterProviderToken,
+  type CoraModuleContext,
+} from "@cora-framework/core"
+
+async function checkActiveCharacter(
+  ctx: CoraModuleContext,
+  playerId: number,
+  characterId: number,
+) {
+  const provider = ctx.services.get(activeCharacterProviderToken)
+  if (!provider) {
+    return false // no characters-owning module present in this deployment
+  }
+  return provider.isActiveCharacter(playerId, characterId)
+}
+```
+
+See [RFC 0002](../../docs/rfcs/0002-kernel-services.md) for the full design rationale, the naming convention, and why a full DI container was rejected in favor of this typed registry.
+
 ## Migrations
 
 A module declares its schema with `migrations` on the object passed to `defineModule`, built with `defineMigrations` from `@cora-framework/db`. Migrations are forward-only and checksummed - see that package's README for the full migration API. The kernel runs every module's migrations before any module's `register()` is called, so a module's tables always exist by the time it wires up hooks and RPC handlers.
@@ -167,6 +209,9 @@ import {
   loadConfig,
   createPermissions,
   corePermissionsMigrations,
+  defineServiceToken,
+  createServiceRegistry,
+  activeCharacterProviderToken,
   type CoraModule,
   type CoraModuleContext,
   type CoraPlatform,
@@ -180,5 +225,8 @@ import {
   type CreateKernelOptions,
   type Permissions,
   type TestPlatform,
+  type ServiceToken,
+  type ServiceRegistry,
+  type ActiveCharacterProvider,
 } from "@cora-framework/core"
 ```

@@ -43,12 +43,12 @@ export const catalog = defineItemCatalog([
 
 ## Server usage
 
-`createInventoryModule({ catalog, ... })` builds a `CoraModule`, the same way `createCharactersModule` does: pass it to `createKernel`'s `modules` array. `isActiveCharacter` is the module's only integration point with whatever owns "which character is this player currently playing" - see Decoupling below for why that is a callback rather than a hard dependency on `@cora-framework/characters`:
+`createInventoryModule({ catalog, ... })` builds a `CoraModule`, the same way `createCharactersModule` does: pass it to `createKernel`'s `modules` array. Boot it alongside `@cora-framework/characters` on the same kernel and inventory auto-resolves "which character is this player currently playing" through the kernel's service registry - no manual wiring required:
 
 ```ts
 import { createKernel, createTestPlatform } from "@cora-framework/core"
 import { createTestDatabase } from "@cora-framework/db"
-import { createCharactersModule, SessionManager } from "@cora-framework/characters"
+import { createCharactersModule } from "@cora-framework/characters"
 import { createInventoryModule, defineItemCatalog } from "@cora-framework/inventory"
 
 const catalog = defineItemCatalog([
@@ -62,15 +62,6 @@ const catalog = defineItemCatalog([
   },
 ])
 
-// `createCharactersModule` owns its own internal `SessionManager` today - it
-// is not exposed for external wiring, so this instance stands in for that
-// missing integration point (see the decoupling note below). A real
-// deployment tracks the same "who is playing which character" state itself
-// (e.g. by remembering `cora.characters.select`'s result per player) and
-// feeds it into `isActiveCharacter` the same way, or waits for a future
-// characters-module release that exposes its session lookup directly.
-const sessions = new SessionManager()
-
 const { platform } = createTestPlatform()
 const db = createTestDatabase()
 
@@ -79,11 +70,13 @@ const kernel = await createKernel({
   db,
   modules: [
     createCharactersModule(),
-    createInventoryModule({
-      catalog,
-      isActiveCharacter: async (playerId, characterId) =>
-        sessions.activeCharacterId(playerId) === characterId,
-    }),
+    // No `isActiveCharacter` option: characters publishes the
+    // core-standard `activeCharacterProviderToken` service (RFC 0002) from
+    // its live session in its own register(), and inventory resolves it
+    // lazily via `ctx.services.get` on every gated call - registration
+    // order between the two modules does not matter, only that both are
+    // registered before the first inventory rpc call arrives.
+    createInventoryModule({ catalog }),
   ],
 })
 
@@ -91,7 +84,7 @@ console.log(kernel.disabledModules) // []
 await kernel.shutdown()
 ```
 
-`InventoryModuleOptions` also accepts `slots` (default 40, the number of slot indices `0..slots-1` a character's inventory has) and `maxWeight` (default 120). If `isActiveCharacter` is omitted it defaults to an allow-all check - fine for a single-module setup or tests, but not a safe default once a real character-owning module is also running (see the docstring on `InventoryModuleOptions` in `src/server/inventory-module.ts`).
+`InventoryModuleOptions` also accepts `slots` (default 40, the number of slot indices `0..slots-1` a character's inventory has) and `maxWeight` (default 120), and still accepts an explicit `isActiveCharacter` callback that overrides the service lookup entirely - useful standalone, in tests, or against a character-owning module other than `@cora-framework/characters`. Full resolution order, applied fresh on every gated call: (1) the explicit `isActiveCharacter` option, if provided; (2) `ctx.services.get(activeCharacterProviderToken)`, if a provider is registered; (3) an allow-all fallback, logged once via `ctx.log("warn", ...)` - not a safe default for a production deployment (see the docstring on `InventoryModuleOptions` in `src/server/inventory-module.ts`).
 
 ## RPC surface
 
@@ -181,7 +174,7 @@ The interaction model is click-select rather than drag-and-drop, deliberately - 
 
 ## Decoupling from `@cora-framework/characters`
 
-The inventory module never imports `@cora-framework/characters` (or any other character-owning module) - `inventory_slots` rows are keyed by a plain numeric `characterId` with no foreign key assumption, and the module's only integration point is the `isActiveCharacter(playerId, characterId) => Promise<boolean>` callback passed in via options. This means it works standalone (every characterId trusted by default), in tests, or alongside `@cora-framework/characters` once wired to that module's notion of "who is playing which character" - the Server usage example above shows the intended shape of that wiring, honestly flagged for the gap that `createCharactersModule` does not yet expose its internal session lookup for another module to share directly.
+The inventory module never imports `@cora-framework/characters` (or any other character-owning module) - `inventory_slots` rows are keyed by a plain numeric `characterId` with no foreign key assumption. Its integration point with "who is playing which character" is entirely through core: the `activeCharacterProviderToken` service defined in `@cora-framework/core` and consumed via `ctx.services.get` (see [RFC 0002](../../../docs/rfcs/0002-kernel-services.md)), with the `isActiveCharacter(playerId, characterId) => Promise<boolean>` option available as an explicit override. This means it works standalone (allow-all by default, with a logged warning), in tests (pass `isActiveCharacter` explicitly), or alongside `@cora-framework/characters` with zero manual wiring - the Server usage example above shows the real pattern: boot both modules on the same kernel and inventory resolves the service automatically, because characters provides `activeCharacterProviderToken` from its live session in its own `register()`.
 
 ## Exports
 

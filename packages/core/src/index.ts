@@ -27,3 +27,13 @@ export {
   createPermissions,
   type Permissions,
 } from "./permissions/permissions.js"
+export {
+  type ActiveCharacterProvider,
+  activeCharacterProviderToken,
+} from "./services/active-character.js"
+export {
+  createServiceRegistry,
+  defineServiceToken,
+  type ServiceRegistry,
+  type ServiceToken,
+} from "./services/services.js"

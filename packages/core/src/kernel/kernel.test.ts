@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { createTestPlatform } from "../adapter/testing.js"
 import type { CoraPlayer } from "../adapter/types.js"
 import { defineModule } from "../modules/define-module.js"
+import { defineServiceToken } from "../services/services.js"
 import { createKernel } from "./kernel.js"
 
 describe("createKernel", () => {
@@ -339,6 +340,93 @@ describe("createKernel", () => {
     expect(seenTablesDuringMigration).toContain("cora_roles")
     expect(seenTablesDuringMigration).toContain("cora_player_roles")
     expect(grantedInsideRegister).toBe(true)
+
+    await kernel.shutdown()
+  })
+
+  it("hands every module the same ctx.services instance, resolved lazily at rpc-handler time regardless of module registration order", async () => {
+    interface Greeter {
+      greet(name: string): string
+    }
+    const greeterToken = defineServiceToken<Greeter>("test.greeter")
+
+    const { platform, invokeRpc } = createTestPlatform()
+    const db = createTestDatabase()
+
+    // consumerModule registers BEFORE providerModule - proving the lookup
+    // inside its rpc handler is deferred to call-time, not register()-time.
+    const consumerModule = defineModule({
+      id: "consumer-module",
+      register(ctx) {
+        ctx.platform.registerRpcHandler("test.greetSomeone", async (input) => {
+          const greeter = ctx.services.get(greeterToken)
+          if (!greeter) throw new Error("greeter not available")
+          return greeter.greet((input as { name: string }).name)
+        })
+      },
+    })
+    const providerModule = defineModule({
+      id: "provider-module",
+      register(ctx) {
+        ctx.services.provide(greeterToken, {
+          greet: (name) => `hello ${name}`,
+        })
+      },
+    })
+
+    const kernel = await createKernel({
+      platform,
+      db,
+      modules: [consumerModule, providerModule],
+    })
+
+    expect(kernel.disabledModules).toEqual([])
+
+    await expect(
+      invokeRpc("test.greetSomeone", { name: "Alice" }, 1),
+    ).resolves.toBe("hello Alice")
+
+    await kernel.shutdown()
+  })
+
+  it("documents the lazy-use contract: ctx.services.get() called during register(), before the provider has registered, returns undefined", async () => {
+    interface Greeter {
+      greet(name: string): string
+    }
+    const greeterToken = defineServiceToken<Greeter>("test.greeter-eager")
+
+    const { platform } = createTestPlatform()
+    const db = createTestDatabase()
+
+    let seenDuringRegister: Greeter | undefined = { greet: () => "never" }
+
+    const eagerConsumerModule = defineModule({
+      id: "eager-consumer-module",
+      register(ctx) {
+        // Called synchronously at register()-time, before providerModule
+        // (registered after it in the module list) has had a chance to
+        // provide - this is the documented pitfall lazy use-time resolution
+        // avoids.
+        seenDuringRegister = ctx.services.get(greeterToken)
+      },
+    })
+    const providerModule = defineModule({
+      id: "provider-module",
+      register(ctx) {
+        ctx.services.provide(greeterToken, {
+          greet: (name) => `hello ${name}`,
+        })
+      },
+    })
+
+    const kernel = await createKernel({
+      platform,
+      db,
+      modules: [eagerConsumerModule, providerModule],
+    })
+
+    expect(kernel.disabledModules).toEqual([])
+    expect(seenDuringRegister).toBeUndefined()
 
     await kernel.shutdown()
   })
