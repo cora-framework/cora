@@ -1,11 +1,14 @@
 import "@cora-framework/ui/theme.css"
 import "@cora-framework/characters/ui/character-select.css"
 import "@cora-framework/inventory/ui/inventory-grid.css"
+import "@cora-framework/money/ui/money-hud.css"
 import "./harness.css"
 import type { CharacterSummary } from "@cora-framework/characters"
 import { CharacterSelect } from "@cora-framework/characters/ui"
 import type { SlotView } from "@cora-framework/inventory/ui"
 import { InventoryGrid } from "@cora-framework/inventory/ui"
+import type { AccountBalances } from "@cora-framework/money"
+import { MoneyHud } from "@cora-framework/money/ui"
 import type {
   CoraNotification,
   MenuItem,
@@ -23,10 +26,15 @@ import { useEffect, useState } from "react"
 import {
   createMockCharacters,
   createMockInventorySlots,
+  createMockMoneyBalances,
   createMockNotifications,
   mockCatalogCategoryFor,
   mockRpc,
 } from "./mock"
+
+const MONEY_DEPOSIT_AMOUNT = 100_00
+const MONEY_WITHDRAW_AMOUNT = 100_00
+const MONEY_ADJUST_CASH_DELTA = 500_00
 
 const MOCK_INVENTORY_MAX_WEIGHT = 100
 const MOCK_INVENTORY_ITEM_WEIGHT = 2
@@ -307,6 +315,54 @@ export function App(): JSX.Element {
     logInventoryAction(`equipped slot ${slot}`)
   }
 
+  const [moneyBalances, setMoneyBalances] = useState<AccountBalances>(() =>
+    createMockMoneyBalances(),
+  )
+  const [moneyLog, setMoneyLog] = useState<string[]>([])
+
+  function logMoneyAction(entry: string): void {
+    setMoneyLog((current) => [
+      `${new Date().toLocaleTimeString()} - ${entry}`,
+      ...current,
+    ])
+  }
+
+  function handleMoneyDeposit(): void {
+    setMoneyBalances((current) => {
+      const amount = Math.min(MONEY_DEPOSIT_AMOUNT, current.cash)
+      return {
+        ...current,
+        cash: current.cash - amount,
+        bank: current.bank + amount,
+      }
+    })
+    logMoneyAction(
+      `deposited ${MONEY_DEPOSIT_AMOUNT} from cash into bank (mock)`,
+    )
+  }
+
+  function handleMoneyWithdraw(): void {
+    setMoneyBalances((current) => {
+      const amount = Math.min(MONEY_WITHDRAW_AMOUNT, current.bank)
+      return {
+        ...current,
+        bank: current.bank - amount,
+        cash: current.cash + amount,
+      }
+    })
+    logMoneyAction(
+      `withdrew ${MONEY_WITHDRAW_AMOUNT} from bank into cash (mock)`,
+    )
+  }
+
+  function handleMoneyAdjustCash(): void {
+    setMoneyBalances((current) => ({
+      ...current,
+      cash: current.cash + MONEY_ADJUST_CASH_DELTA,
+    }))
+    logMoneyAction(`adjusted cash by +${MONEY_ADJUST_CASH_DELTA} (mock)`)
+  }
+
   return (
     <div className="harness">
       <header className="harness-header">
@@ -436,6 +492,45 @@ export function App(): JSX.Element {
           ) : (
             <ul>
               {inventoryLog.map((entry) => (
+                <li key={entry}>{entry}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <section className="harness-section">
+        <h2>Money</h2>
+        <p className="harness-status">
+          @cora-framework/money's MoneyHud, rendered with mutable local mock
+          balances (integer minor units). MoneyHud itself is a pure
+          presentational component - the buttons below simulate what a
+          `cora.money.deposit`/`withdraw`/`adjust` success (and the resulting
+          `cora.money.ui.update` push) would do to the balances.
+        </p>
+        <MoneyHud
+          cash={moneyBalances.cash}
+          bank={moneyBalances.bank}
+          crypto={moneyBalances.crypto}
+        />
+        <div className="harness-controls">
+          <button type="button" onClick={handleMoneyDeposit}>
+            Deposit 100
+          </button>
+          <button type="button" onClick={handleMoneyWithdraw}>
+            Withdraw 100
+          </button>
+          <button type="button" onClick={handleMoneyAdjustCash}>
+            Adjust +500 cash
+          </button>
+        </div>
+        <div className="harness-log">
+          <h3>Action log</h3>
+          {moneyLog.length === 0 ? (
+            <p className="harness-log-empty">No actions yet.</p>
+          ) : (
+            <ul>
+              {moneyLog.map((entry) => (
                 <li key={entry}>{entry}</li>
               ))}
             </ul>

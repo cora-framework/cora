@@ -1,5 +1,6 @@
 import type { CharacterSummary } from "@cora-framework/characters"
 import type { SlotView } from "@cora-framework/inventory/ui"
+import type { AccountBalances } from "@cora-framework/money"
 import type { CoraNotification } from "@cora-framework/ui"
 
 // Placeholder mock data layer for the harness. This will eventually be
@@ -131,6 +132,11 @@ export function createMockInventorySlots(): SlotView[] {
     equipped: false,
   }
   return slots
+}
+
+/** Starting balances (integer minor units) for the harness's Money section. */
+export function createMockMoneyBalances(): AccountBalances {
+  return { cash: 25000, bank: 500000, crypto: 12345 }
 }
 
 export function mockRpc<T>(data: T, delayMs = 300): Promise<T> {
