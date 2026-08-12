@@ -11,6 +11,15 @@ export const CORA_MONEY_ADJUST = "cora.money.adjust"
 export const CORA_MONEY_ADJUST_PERMISSION = "cora.money.adjust"
 
 /**
+ * Client call pushed fire-and-forget after every successful balance
+ * mutation (transfer/deposit/withdraw/adjust), matching the
+ * `cora.inventory.ui.refresh` convention in `@cora-framework/inventory`. A
+ * `transfer` pushes this to both `fromCharacterId` and `toCharacterId`'s
+ * owning players.
+ */
+export const CORA_MONEY_UI_UPDATE = "cora.money.ui.update"
+
+/**
  * The three balances a character owns. All amounts across this module are
  * integers in minor units (e.g. cents) - never floats, to avoid rounding
  * drift on money. `crypto` is a third, cash/bank-shaped balance (no
@@ -121,3 +130,9 @@ export const adjustInputSchema = z
   })
   .strict()
 export type AdjustInput = z.infer<typeof adjustInputSchema>
+
+/** Payload of the `cora.money.ui.update` client call. */
+export interface MoneyUiUpdatePayload {
+  characterId: number
+  balances: AccountBalances
+}
