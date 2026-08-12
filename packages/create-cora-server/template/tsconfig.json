@@ -15,8 +15,8 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "."
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src", "cora.config.ts"],
+  "exclude": ["src/**/*.test.ts", "node_modules", "dist"]
 }

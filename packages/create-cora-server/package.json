@@ -33,6 +33,11 @@
     "@cora-framework/lib": "workspace:*"
   },
   "devDependencies": {
+    "@cora-framework/characters": "workspace:*",
+    "@cora-framework/core": "workspace:*",
+    "@cora-framework/db": "workspace:*",
+    "@cora-framework/inventory": "workspace:*",
+    "@cora-framework/money": "workspace:*",
     "@types/node": "^22.10.0",
     "typescript": "^5.9.3"
   }

@@ -32,22 +32,26 @@ my-server/
   package.json
   tsconfig.json
   biome.json
+  cora.config.ts
   cora.migrate.mjs
   README.md
   src/
     server/
       index.ts
-      index.test.ts
+      build-modules.ts
+      build-modules.test.ts
 ```
 
 Generated files include:
-- **package.json**: Dependencies for @cora-framework/lib, @cora-framework/db, @cora-framework/cli, kysely (workspace linked until first npm publish), plus TypeScript, Vitest, and Biome devDependencies
+- **package.json**: Dependencies on the published `@cora-framework/{core,db,lib,ui,characters,inventory,money}` packages plus `kysely` and `mysql2`, and devDependencies for TypeScript, Vitest, Biome, and the React tooling the UI modules need to typecheck
 - **tsconfig.json**: TypeScript configuration targeting ES2022 with strict mode
 - **biome.json**: Code formatter and linter configuration
 - **.gitignore**: Standard Node.js exclusions
-- **cora.migrate.mjs**: Example migration configuration for running `cora migrate`
-- **src/server/index.ts**: Starter module using Result types and zone utilities from @cora-framework/lib
-- **src/server/index.test.ts**: Minimal Vitest test demonstrating the test setup
+- **cora.config.ts**: The project's single configuration surface - database settings from `CORA_DB_*` environment variables, an example item catalog, inventory slot/weight limits, and starting character balances
+- **cora.migrate.mjs**: Aggregated migration list (core permissions plus the characters, inventory, and money module migrations) for the `cora migrate` CLI
+- **src/server/build-modules.ts**: Builds the wired module list (characters, inventory, money) from `cora.config.ts`, usable both by the real entry point and headlessly in tests
+- **src/server/index.ts**: The real server entry - boots the live CyberMP platform adapter, the database, and a kernel running the modules from `build-modules.ts`
+- **src/server/build-modules.test.ts**: A headless Vitest test that boots the same module wiring against a test platform and test database
 
 ## Next Steps
 
@@ -59,18 +63,13 @@ pnpm install
 ```
 
 Then:
-- Review `cora.migrate.mjs` and add your database schema migrations
-- Edit `src/server/index.ts` to build your application
-- Run `pnpm test` to execute tests
-- Run `pnpm migrate` to apply migrations
+- Edit `cora.config.ts` to change the item catalog and starting balances
+- Run `pnpm test` to boot the wired kernel headlessly and confirm it works
+- Run `pnpm migrate` to apply migrations against your database
 - Run `pnpm build` to compile to JavaScript
+- Deploy the build inside a running CyberMP server, which is required to
+  actually start `src/server/index.ts` (it needs the live `mp` global)
 
-## Note: Pre-release Packages
-
-The `@cora` packages are not yet published to npm. Until the first release, the generated `package.json` uses workspace ranges (e.g., `^0.1.0`) or local linking. If working in the CORA monorepo, this is automatic. If scaffolding outside the repo, manually link the packages:
-
-```sh
-pnpm link /path/to/cora/packages/lib
-pnpm link /path/to/cora/packages/db
-pnpm link /path/to/cora/packages/cli
-```
+See the generated project's own `README.md` for the full getting-started
+guide, including how the modules integrate with each other via the
+active-character kernel service.

@@ -5,18 +5,32 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "migrate": "cora migrate"
   },
   "dependencies": {
-    "@cora-framework/lib": "^0.1.0",
-    "@cora-framework/db": "^0.1.0",
+    "@cora-framework/characters": "^0.2.0",
     "@cora-framework/cli": "^0.1.0",
-    "kysely": "^0.28.0"
+    "@cora-framework/core": "^0.3.0",
+    "@cora-framework/db": "^0.1.0",
+    "@cora-framework/inventory": "^0.2.0",
+    "@cora-framework/lib": "^0.1.0",
+    "@cora-framework/money": "^0.1.0",
+    "@cora-framework/ui": "^0.1.0",
+    "kysely": "^0.28.0",
+    "mysql2": "^3.11.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.7",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10",
-    "@biomejs/biome": "^2.5.7"
+    "vitest": "^4.1.10"
   }
 }

@@ -120,6 +120,21 @@ importers:
         specifier: workspace:*
         version: link:../lib
     devDependencies:
+      '@cora-framework/characters':
+        specifier: workspace:*
+        version: link:../modules/characters
+      '@cora-framework/core':
+        specifier: workspace:*
+        version: link:../core
+      '@cora-framework/db':
+        specifier: workspace:*
+        version: link:../db
+      '@cora-framework/inventory':
+        specifier: workspace:*
+        version: link:../modules/inventory
+      '@cora-framework/money':
+        specifier: workspace:*
+        version: link:../modules/money
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
