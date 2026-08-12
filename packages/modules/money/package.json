@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/money",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Server-authoritative character-bound accounts module (cash/bank/crypto) with an atomic transactional ledger for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",
