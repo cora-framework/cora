@@ -209,6 +209,9 @@ import {
   loadConfig,
   createPermissions,
   corePermissionsMigrations,
+  defineServiceToken,
+  createServiceRegistry,
+  activeCharacterProviderToken,
   type CoraModule,
   type CoraModuleContext,
   type CoraPlatform,
@@ -222,5 +225,8 @@ import {
   type CreateKernelOptions,
   type Permissions,
   type TestPlatform,
+  type ServiceToken,
+  type ServiceRegistry,
+  type ActiveCharacterProvider,
 } from "@cora-framework/core"
 ```
