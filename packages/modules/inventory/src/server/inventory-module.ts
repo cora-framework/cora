@@ -1,4 +1,5 @@
 import {
+  activeCharacterProviderToken,
   type CoraModule,
   type CoraModuleContext,
   defineModule,
@@ -53,15 +54,24 @@ export const DEFAULT_INVENTORY_MAX_WEIGHT = 120
  * `isActiveCharacter` decouples this module from `@cora-framework/characters`
  * (or any other character-owning module): the inventory module binds to a
  * plain numeric `characterId` and never imports characters-module code
- * directly, so it works standalone or alongside it. If omitted, it defaults
- * to an allow-all check (every characterId is treated as active for every
- * caller) - deliberately permissive so the module is usable out of the box
- * in a single-module setup or in tests, but NOT a safe default for a
- * production deployment that also runs the characters module: wire this to
- * the characters module's session lookup (e.g.
- * `(playerId, characterId) => sessions.activeCharacterId(playerId) === characterId`)
- * so a player cannot manipulate an inventory belonging to a character they
- * are not currently playing.
+ * directly. At handler call time (never at `register()`, so registration
+ * order between inventory and whatever provides the service never matters)
+ * the actual check is resolved in this order:
+ *
+ *  1. This `isActiveCharacter` option, if provided - always wins, even if a
+ *     service is also available, so an explicit override is never silently
+ *     shadowed.
+ *  2. `ctx.services.get(activeCharacterProviderToken)` (see
+ *     `docs/rfcs/0002-kernel-services.md`) - the core-standard service a
+ *     character-owning module (e.g. `@cora-framework/characters`) publishes
+ *     from its live session state. Used automatically when present, with no
+ *     wiring code required beyond booting both modules on the same kernel.
+ *  3. An allow-all fallback (every characterId is treated as active for
+ *     every caller) - deliberately permissive so the module is usable out of
+ *     the box in a single-module setup or in tests, but NOT a safe default
+ *     for a production deployment. A `"warn"` is logged via `ctx.log` the
+ *     first time this fallback is hit, once per module instance, not on
+ *     every call.
  */
 export interface InventoryModuleOptions {
   catalog: ItemCatalog
@@ -77,7 +87,18 @@ type ResolvedInventoryOptions = {
   catalog: ItemCatalog
   slots: number
   maxWeight: number
-  isActiveCharacter: (playerId: number, characterId: number) => Promise<boolean>
+  /**
+   * Only set when the caller explicitly passed `isActiveCharacter` in
+   * `InventoryModuleOptions` - left `undefined` otherwise so
+   * `createInventoryHandlers` can tell "explicitly overridden" apart from
+   * "resolve via the service registry, falling back to allow-all" at handler
+   * call time. See the resolution order documented on
+   * `InventoryModuleOptions`.
+   */
+  isActiveCharacter?: (
+    playerId: number,
+    characterId: number,
+  ) => Promise<boolean>
 }
 
 /**
@@ -114,7 +135,10 @@ function invalidInput(error: z.ZodError): InventoryErrorResult {
  * `isActiveCharacter(playerId, characterId)` and fails closed with
  * `not_active_character` when it returns false, so a player can never read
  * or mutate an inventory belonging to a character they are not currently
- * playing.
+ * playing. That check is resolved lazily, per call, in the order documented
+ * on `InventoryModuleOptions`: the explicit option, then
+ * `ctx.services.get(activeCharacterProviderToken)`, then an allow-all
+ * fallback (logged once as a `"warn"`).
  *
  * `give` is admin/server tooling, not an ordinary player action, and is
  * authorized purely by the caller holding the `cora.inventory.give`
@@ -141,6 +165,39 @@ export function createInventoryHandlers(
     maxWeight: resolvedOptions.maxWeight,
   }
 
+  // See the resolution order documented on `InventoryModuleOptions`. Resolved
+  // fresh on every call (not cached at register time) so the explicit option
+  // always wins and the service lookup always sees the registry's current
+  // state - registration order between inventory and whatever provides
+  // `activeCharacterProviderToken` never matters. `warnedAllowAllFallback`
+  // only guards the log line, not the fallback behavior itself.
+  let warnedAllowAllFallback = false
+  async function isActiveCharacter(
+    playerId: number,
+    characterId: number,
+  ): Promise<boolean> {
+    if (resolvedOptions.isActiveCharacter) {
+      return resolvedOptions.isActiveCharacter(playerId, characterId)
+    }
+    const provider = ctx.services.get(activeCharacterProviderToken)
+    if (provider) {
+      return provider.isActiveCharacter(playerId, characterId)
+    }
+    if (!warnedAllowAllFallback) {
+      warnedAllowAllFallback = true
+      ctx.log(
+        "warn",
+        "inventory: no isActiveCharacter option was provided and no " +
+          "activeCharacterProviderToken service is registered - falling " +
+          "back to allow-all (every characterId treated as active). This " +
+          "is NOT safe for production: pass isActiveCharacter explicitly " +
+          "or boot alongside a module that provides the service (e.g. " +
+          "@cora-framework/characters).",
+      )
+    }
+    return true
+  }
+
   function pushRefresh(playerId: number, characterId: number): void {
     const payload: InventoryUiRefreshPayload = { characterId }
     ctx.platform
@@ -160,10 +217,7 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
+      const active = await isActiveCharacter(playerId, characterId)
       if (!active) return { ok: false, error: "not_active_character" }
 
       const rows = await db
@@ -203,10 +257,7 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId, fromSlot, toSlot } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
+      const active = await isActiveCharacter(playerId, characterId)
       if (!active) return { ok: false, error: "not_active_character" }
 
       const result = await withTransaction(db, (trx) =>
@@ -221,10 +272,7 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId, fromSlot, toSlot, quantity } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
+      const active = await isActiveCharacter(playerId, characterId)
       if (!active) return { ok: false, error: "not_active_character" }
 
       const result = await withTransaction(db, (trx) =>
@@ -268,10 +316,7 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId, slot, quantity } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
+      const active = await isActiveCharacter(playerId, characterId)
       if (!active) return { ok: false, error: "not_active_character" }
 
       const result = await withTransaction(db, (trx) =>
@@ -286,10 +331,7 @@ export function createInventoryHandlers(
       if (!parsed.success) return invalidInput(parsed.error)
       const { characterId, slot } = parsed.data
 
-      const active = await resolvedOptions.isActiveCharacter(
-        playerId,
-        characterId,
-      )
+      const active = await isActiveCharacter(playerId, characterId)
       if (!active) return { ok: false, error: "not_active_character" }
 
       // `equipOperation` returns a richer `EquipResult` (which slot got
@@ -323,7 +365,13 @@ export function createInventoryModule(
     catalog: options.catalog,
     slots: options.slots ?? DEFAULT_INVENTORY_SLOTS,
     maxWeight: options.maxWeight ?? DEFAULT_INVENTORY_MAX_WEIGHT,
-    isActiveCharacter: options.isActiveCharacter ?? (async () => true),
+    // Only set when explicitly supplied (`exactOptionalPropertyTypes`
+    // deliberately distinguishes "omitted" from "set to undefined" here) -
+    // see `createInventoryHandlers`, which resolves the actual check lazily
+    // at handler call time (option -> service -> allow-all fallback).
+    ...(options.isActiveCharacter
+      ? { isActiveCharacter: options.isActiveCharacter }
+      : {}),
   }
 
   return defineModule({
