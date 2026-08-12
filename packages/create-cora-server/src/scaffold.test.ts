@@ -39,6 +39,9 @@ describe("scaffold", () => {
     const packageJson = await readFile(join(targetDir, "package.json"), "utf8")
     expect(packageJson).toContain('"name": "my-server"')
     expect(packageJson).not.toContain("__PROJECT_NAME__")
+    expect(packageJson).toContain("@cora-framework/characters")
+    expect(packageJson).toContain("@cora-framework/inventory")
+    expect(packageJson).toContain("@cora-framework/money")
 
     const readme = await readFile(join(targetDir, "README.md"), "utf8")
     expect(readme).toContain("# my-server")
