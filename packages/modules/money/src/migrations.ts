@@ -1,4 +1,5 @@
 import { defineMigrations } from "@cora-framework/db"
+import type { Generated } from "kysely"
 
 /**
  * The `money_accounts` table's row shape: one row per character, holding
@@ -29,7 +30,7 @@ export interface MoneyAccountsTable {
  */
 export interface MoneyLedgerTable {
   money_ledger: {
-    id: number
+    id: Generated<number>
     character_id: number
     kind: string
     delta: number
