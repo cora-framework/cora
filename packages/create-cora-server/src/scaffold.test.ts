@@ -31,8 +31,10 @@ describe("scaffold", () => {
     expect(result.value.files).toContain(".gitignore")
     expect(result.value.files).not.toContain("gitignore")
     expect(result.value.files).toContain("cora.migrate.mjs")
+    expect(result.value.files).toContain("cora.config.ts")
     expect(result.value.files).toContain("src/server/index.ts")
-    expect(result.value.files).toContain("src/server/index.test.ts")
+    expect(result.value.files).toContain("src/server/build-modules.ts")
+    expect(result.value.files).toContain("src/server/build-modules.test.ts")
 
     const packageJson = await readFile(join(targetDir, "package.json"), "utf8")
     expect(packageJson).toContain('"name": "my-server"')
