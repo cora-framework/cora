@@ -8,7 +8,7 @@ External assets to claim for CORA. Items marked (human) need Dietrich's accounts
 - [x] Transfer/push this repo as `cora-framework/cora` - DONE 2026-08-10 (CI green, branch protection on)
 - [ ] npm scope: check `@cora` (`npm org` or npmjs.com); fallback `@cora-framework` (human, free). Record the result here.
 - [ ] Domain `coraframework.dev` (human, ~15 EUR/yr) - TODO: after purchase, switch package.json homepage fields and repo homepage back from the GitHub URL; optional extras: `cora-mp.dev`, `getcora.dev`
-- [ ] Discord server "CORA Framework" (human, free) - claim now, structure later (Phase 1 marketing)
+- [x] Discord server "CORA" - DONE 2026-08-12, permanent invite https://discord.gg/6bXxUT2TQX (wired into README)
 
 ## Important - within Phase 1
 

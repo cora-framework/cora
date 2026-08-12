@@ -6,7 +6,7 @@
 
 *Type-safe from UI to database. Modular by design. Built in the open.*
 
-[Docs](https://cora-framework.github.io/cora/) · [Discord](#) · [Roadmap](#roadmap)
+[Docs](https://cora-framework.github.io/cora/) · [Discord](https://discord.gg/6bXxUT2TQX) · [Roadmap](#roadmap)
 
 </div>
 
