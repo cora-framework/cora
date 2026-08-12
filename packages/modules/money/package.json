@@ -1,0 +1,39 @@
+{
+  "name": "@cora-framework/money",
+  "version": "0.0.0",
+  "description": "Server-authoritative character-bound accounts module (cash/bank/crypto) with an atomic transactional ledger for the CORA framework.",
+  "license": "MIT",
+  "homepage": "https://github.com/cora-framework/cora",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cora-framework/cora.git",
+    "directory": "packages/modules/money"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cora-framework/core": "workspace:*",
+    "@cora-framework/db": "workspace:*",
+    "@cora-framework/lib": "workspace:*",
+    "kysely": "^0.28.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cora-framework/characters": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}
