@@ -1,6 +1,6 @@
 {
   "name": "@cora-framework/characters",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Multicharacter CRUD module for the CORA framework.",
   "license": "MIT",
   "homepage": "https://github.com/cora-framework/cora",
