@@ -474,6 +474,43 @@ describe("SessionManager connect epoch", () => {
   })
 })
 
+describe("SessionManager active-character provider surface", () => {
+  it("not connected: isActiveCharacter is false and getActiveCharacterId is null", () => {
+    const sessions = new SessionManager()
+
+    expect(sessions.isActiveCharacter(PLAYER_ONE.id, 42)).toBe(false)
+    expect(sessions.getActiveCharacterId(PLAYER_ONE.id)).toBeNull()
+  })
+
+  it("selecting: isActiveCharacter is false and getActiveCharacterId is null", () => {
+    const sessions = new SessionManager()
+    sessions.startSelecting(PLAYER_ONE.id)
+
+    expect(sessions.isActiveCharacter(PLAYER_ONE.id, 42)).toBe(false)
+    expect(sessions.getActiveCharacterId(PLAYER_ONE.id)).toBeNull()
+  })
+
+  it("playing characterId X: isActiveCharacter is true only for X, false for a different Y, and getActiveCharacterId returns X", () => {
+    const sessions = new SessionManager()
+    sessions.startSelecting(PLAYER_ONE.id)
+    sessions.setPlaying(PLAYER_ONE.id, 42)
+
+    expect(sessions.isActiveCharacter(PLAYER_ONE.id, 42)).toBe(true)
+    expect(sessions.isActiveCharacter(PLAYER_ONE.id, 99)).toBe(false)
+    expect(sessions.getActiveCharacterId(PLAYER_ONE.id)).toBe(42)
+  })
+
+  it("does not leak one player's active character onto another player", () => {
+    const sessions = new SessionManager()
+    sessions.startSelecting(PLAYER_ONE.id)
+    sessions.setPlaying(PLAYER_ONE.id, 42)
+    sessions.startSelecting(PLAYER_TWO.id)
+
+    expect(sessions.isActiveCharacter(PLAYER_TWO.id, 42)).toBe(false)
+    expect(sessions.getActiveCharacterId(PLAYER_TWO.id)).toBeNull()
+  })
+})
+
 // Rapid-reconnect end-to-end simulation through the module's own connect
 // flow (rather than the SessionManager unit tests above) was left out
 // deliberately: TestPlatform's callClient/db have no controllable-latency
