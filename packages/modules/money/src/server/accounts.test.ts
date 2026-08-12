@@ -16,7 +16,13 @@ import {
 
 type Schema = MoneyAccountsTable & MoneyLedgerTable
 
-const CONFIG: AccountsConfig = { startingCash: 500, startingBank: 1000 }
+// Most tests use a zero-starting config and seed balances explicitly through
+// `adjust` calls, so ledger row counts stay predictable and unrelated to the
+// starting-balance seeding behavior under test below. `SEEDED_CONFIG` is
+// used only by the tests that specifically exercise nonzero starting
+// balances (provisioning defaults, and the seed-ledger-row audit invariant).
+const CONFIG: AccountsConfig = { startingCash: 0, startingBank: 0 }
+const SEEDED_CONFIG: AccountsConfig = { startingCash: 500, startingBank: 1000 }
 const CHARACTER_A = 1
 const CHARACTER_B = 2
 
@@ -57,10 +63,17 @@ afterEach(() => {
 })
 
 describe("adjust", () => {
-  it("provisions the account row from starting defaults on first adjust", async () => {
+  it("provisions the account row from starting defaults on first adjust, seeding a ledger row per nonzero starting balance", async () => {
     const db = await setupDb()
 
-    const result = await adjust(db, CHARACTER_A, "cash", 100, "seed", CONFIG)
+    const result = await adjust(
+      db,
+      CHARACTER_A,
+      "cash",
+      100,
+      "top-up",
+      SEEDED_CONFIG,
+    )
 
     expect(result).toEqual({ ok: true, balanceAfter: 600 })
     const row = await accountRow(db, CHARACTER_A)
@@ -70,6 +83,42 @@ describe("adjust", () => {
       bank: 1000,
       crypto: 0,
     })
+
+    const rows = await ledgerRows(db, CHARACTER_A)
+
+    // The cash seed row (delta 500) must be written, and ordered before the
+    // real +100 adjust, so sum(cash ledger deltas) === balance holds.
+    const cashLedger = rows.filter((r) => r.kind === "cash")
+    expect(cashLedger.map((r) => r.reason)).toEqual(["seed", "top-up"])
+    expect(cashLedger[0]).toMatchObject({ delta: 500, balance_after: 500 })
+    expect(cashLedger[1]).toMatchObject({ delta: 100, balance_after: 600 })
+    const cashDeltaSum = cashLedger.reduce((sum, r) => sum + r.delta, 0)
+    expect(cashDeltaSum).toBe(600)
+
+    // The bank seed row (delta 1000) must also be written even though this
+    // adjust only touched cash - the whole account is provisioned at once.
+    const bankLedger = rows.filter((r) => r.kind === "bank")
+    expect(bankLedger).toHaveLength(1)
+    expect(bankLedger[0]).toMatchObject({
+      reason: "seed",
+      delta: 1000,
+      balance_after: 1000,
+    })
+  })
+
+  it("does not write a seed ledger row for a starting balance of 0", async () => {
+    const db = await setupDb()
+
+    await adjust(db, CHARACTER_A, "cash", 50, "grant", CONFIG)
+
+    const rows = await ledgerRows(db, CHARACTER_A)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      reason: "grant",
+      delta: 50,
+      balance_after: 50,
+    })
+    expect(rows.some((r) => r.reason === "seed")).toBe(false)
   })
 
   it("adds a positive delta", async () => {
@@ -78,7 +127,7 @@ describe("adjust", () => {
 
     const result = await adjust(db, CHARACTER_A, "cash", 250, "add", CONFIG)
 
-    expect(result).toEqual({ ok: true, balanceAfter: 850 })
+    expect(result).toEqual({ ok: true, balanceAfter: 350 })
   })
 
   it("subtracts a negative delta", async () => {
@@ -89,17 +138,17 @@ describe("adjust", () => {
       db,
       CHARACTER_A,
       "cash",
-      -200,
+      -50,
       "subtract",
       CONFIG,
     )
 
-    expect(result).toEqual({ ok: true, balanceAfter: 400 })
+    expect(result).toEqual({ ok: true, balanceAfter: 50 })
   })
 
   it("returns insufficient_funds and writes nothing when the result would go negative", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed", CONFIG)
 
     const result = await adjust(
       db,
@@ -129,14 +178,14 @@ describe("adjust", () => {
       kind: "bank",
       delta: 250,
       reason: "paycheck",
-      balance_after: 1250,
+      balance_after: 250,
     })
     expect(typeof rows[0]?.created_at).toBe("string")
   })
 
   it("allowNegative permits the balance to go negative", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed", CONFIG)
 
     const result = await adjust(
       db,
@@ -173,8 +222,8 @@ describe("adjust", () => {
 describe("transfer", () => {
   it("moves the amount between two accounts and writes exactly two ledger rows", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
-    await adjust(db, CHARACTER_B, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed", CONFIG)
+    await adjust(db, CHARACTER_B, "cash", 500, "seed", CONFIG)
 
     const result = await transfer(
       db,
@@ -200,8 +249,8 @@ describe("transfer", () => {
 
   it("insufficient_funds leaves zero mutations and writes zero ledger rows", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
-    await adjust(db, CHARACTER_B, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed", CONFIG)
+    await adjust(db, CHARACTER_B, "cash", 500, "seed", CONFIG)
 
     const result = await transfer(
       db,
@@ -256,8 +305,8 @@ describe("transfer", () => {
 
   it("rolls back both legs and both ledger rows when the destination leg fails mid-transaction", async () => {
     const outerDb = await setupDb()
-    await adjust(outerDb, CHARACTER_A, "cash", 0, "seed", CONFIG)
-    await adjust(outerDb, CHARACTER_B, "cash", 0, "seed", CONFIG)
+    await adjust(outerDb, CHARACTER_A, "cash", 500, "seed", CONFIG)
+    await adjust(outerDb, CHARACTER_B, "cash", 500, "seed", CONFIG)
 
     await expect(
       withTransaction(outerDb, async (trx) => {
@@ -305,7 +354,8 @@ describe("transfer", () => {
 describe("moveBetweenOwn", () => {
   it("deposit: moves cash to bank", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed-cash", CONFIG)
+    await adjust(db, CHARACTER_A, "bank", 1000, "seed-bank", CONFIG)
 
     const result = await moveBetweenOwn(
       db,
@@ -324,7 +374,8 @@ describe("moveBetweenOwn", () => {
 
   it("withdraw: moves bank to cash", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed-cash", CONFIG)
+    await adjust(db, CHARACTER_A, "bank", 1000, "seed-bank", CONFIG)
 
     const result = await moveBetweenOwn(
       db,
@@ -343,7 +394,7 @@ describe("moveBetweenOwn", () => {
 
   it("returns insufficient_funds and writes nothing when the source can't cover the amount", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "cash", 0, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "cash", 500, "seed", CONFIG)
 
     const result = await moveBetweenOwn(
       db,
@@ -357,7 +408,7 @@ describe("moveBetweenOwn", () => {
     expect(result).toEqual({ ok: false, error: "insufficient_funds" })
     const row = await accountRow(db, CHARACTER_A)
     expect(row?.cash).toBe(500)
-    expect(row?.bank).toBe(1000)
+    expect(row?.bank).toBe(0)
     expect(await ledgerRows(db, CHARACTER_A)).toHaveLength(1) // only the seed
   })
 })
@@ -366,7 +417,7 @@ describe("getBalances", () => {
   it("returns starting defaults without writing a row when none exists", async () => {
     const db = await setupDb()
 
-    const balances = await getBalances(db, CHARACTER_A, CONFIG)
+    const balances = await getBalances(db, CHARACTER_A, SEEDED_CONFIG)
 
     expect(balances).toEqual({ cash: 500, bank: 1000, crypto: 0 })
     expect(await accountRow(db, CHARACTER_A)).toBeUndefined()
@@ -374,9 +425,9 @@ describe("getBalances", () => {
 
   it("returns the row's values once one exists", async () => {
     const db = await setupDb()
-    await adjust(db, CHARACTER_A, "crypto", 42, "seed", CONFIG)
+    await adjust(db, CHARACTER_A, "crypto", 42, "seed-crypto", SEEDED_CONFIG)
 
-    const balances = await getBalances(db, CHARACTER_A, CONFIG)
+    const balances = await getBalances(db, CHARACTER_A, SEEDED_CONFIG)
 
     expect(balances).toEqual({ cash: 500, bank: 1000, crypto: 42 })
   })

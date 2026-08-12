@@ -74,6 +74,15 @@ function balanceUpdate(
  * file's comment on why this is acceptable against sqlite's single-writer
  * test/dev target) - callers that need this to be part of a larger atomic
  * operation must already be running inside `withTransaction`.
+ *
+ * Audit invariant: a character+kind's balance must always equal the sum of
+ * that character+kind's `money_ledger` deltas. A nonzero starting balance is
+ * therefore itself recorded as a `"seed"` ledger row (one for `cash`, one
+ * for `bank`, each only written if its starting value is nonzero - `crypto`
+ * always starts at 0, so it never gets a seed row) at provision time, before
+ * any real `adjust` can append its own row on top. Written in the same call
+ * as the `money_accounts` insert, so a caller running this inside
+ * `withTransaction` gets both atomically.
  */
 async function fetchOrProvisionRow(
   db: MoneyDb,
@@ -99,6 +108,40 @@ async function fetchOrProvisionRow(
     crypto: 0,
   }
   await db.insertInto("money_accounts").values(row).execute()
+
+  const now = new Date().toISOString()
+  const seedRows: Array<{
+    character_id: number
+    kind: AccountKind
+    delta: number
+    reason: string
+    balance_after: number
+    created_at: string
+  }> = []
+  if (config.startingCash !== 0) {
+    seedRows.push({
+      character_id: characterId,
+      kind: "cash",
+      delta: config.startingCash,
+      reason: "seed",
+      balance_after: config.startingCash,
+      created_at: now,
+    })
+  }
+  if (config.startingBank !== 0) {
+    seedRows.push({
+      character_id: characterId,
+      kind: "bank",
+      delta: config.startingBank,
+      reason: "seed",
+      balance_after: config.startingBank,
+      created_at: now,
+    })
+  }
+  for (const seedRow of seedRows) {
+    await db.insertInto("money_ledger").values(seedRow).execute()
+  }
+
   return row
 }
 
