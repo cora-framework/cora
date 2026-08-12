@@ -1,0 +1,60 @@
+/*
+ * Module-local styles for `MoneyHud` (see `./MoneyHud.tsx`).
+ *
+ * As with @cora-framework/inventory's `inventory-grid.css`, this file lives
+ * in @cora-framework/money, not in @cora-framework/ui/theme.css: theme.css
+ * only styles the generic primitives it ships itself and must never know
+ * about a downstream module's classnames. Every rule below only reads
+ * `--cora-*` custom properties (defined by @cora-framework/ui/theme.css)
+ * rather than hardcoding colors, so this file still tracks the active
+ * theme. Consumers import both:
+ *
+ *   import "@cora-framework/ui/theme.css"
+ *   import "@cora-framework/money/ui/money-hud.css"
+ *
+ * See the package README's UI section for the full usage example.
+ */
+
+.cora-money-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--cora-font);
+  background: var(--cora-surface);
+  color: var(--cora-text);
+  border-radius: var(--cora-radius);
+  box-shadow: inset 0 0 0 1px var(--cora-muted);
+  padding: 8px 12px;
+}
+
+.cora-money-hud-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cora-money-hud-label {
+  color: var(--cora-muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cora-money-hud-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.cora-money-hud-cash .cora-money-hud-value {
+  color: var(--cora-text);
+}
+
+.cora-money-hud-bank .cora-money-hud-value {
+  color: var(--cora-accent);
+}
+
+.cora-money-hud-crypto .cora-money-hud-value {
+  color: var(--cora-accent-2);
+}
